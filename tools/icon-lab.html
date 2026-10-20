@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>browser-mcp 图标工作台</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b1020;
+        --panel: #151b2e;
+        --panel-2: #1c2438;
+        --line: #2a3550;
+        --text: #e6ebf7;
+        --muted: #8f9cbb;
+        --accent: #ff2442;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 14px/1.6 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+      }
+      header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--line);
+      }
+      header h1 { margin: 0 0 4px; font-size: 17px; }
+      header p { margin: 0; color: var(--muted); font-size: 13px; }
+      main {
+        display: grid;
+        grid-template-columns: 280px minmax(0, 1fr);
+        gap: 20px;
+        padding: 20px 24px 40px;
+        align-items: start;
+      }
+      section {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 14px 16px;
+      }
+      section + section { margin-top: 16px; }
+      h2 { margin: 0 0 10px; font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: .04em; }
+      label { display: block; margin: 10px 0 4px; font-size: 12px; color: var(--muted); }
+      select, input[type="range"], button, textarea {
+        font: inherit;
+        color: var(--text);
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 6px 8px;
+        width: 100%;
+      }
+      input[type="range"] { padding: 0; }
+      button { cursor: pointer; }
+      button:hover { border-color: var(--accent); }
+      .row { display: flex; gap: 8px; }
+      .row > * { flex: 1; }
+      .stage {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+        align-items: center;
+        justify-content: center;
+        min-height: 240px;
+        padding: 20px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+      }
+      .stage.light { background: #ffffff; }
+      .stage.dark { background: #0f172a; }
+      .stage.checker {
+        background-image:
+          linear-gradient(45deg, #d5dae5 25%, transparent 25%),
+          linear-gradient(-45deg, #d5dae5 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #d5dae5 75%),
+          linear-gradient(-45deg, transparent 75%, #d5dae5 75%);
+        background-size: 16px 16px;
+        background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+        background-color: #fff;
+      }
+      .frame { position: relative; line-height: 0; }
+      .frame .grid {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        display: none;
+      }
+      .frame.grid-on .grid {
+        display: block;
+        background-image:
+          linear-gradient(to right, rgb(0 0 0 / .18) 1px, transparent 1px),
+          linear-gradient(to bottom, rgb(0 0 0 / .18) 1px, transparent 1px);
+        background-size: var(--grid) var(--grid);
+      }
+      .masked { overflow: hidden; }
+      .masked.circle { clip-path: circle(50%); }
+      .masked.squircle { clip-path: inset(0 round 28%); }
+      .strip { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-end; margin-top: 18px; }
+      .strip figure { margin: 0; text-align: center; }
+      .strip figcaption { margin-top: 8px; font-size: 11px; color: var(--muted); }
+      code, textarea { font-family: "Cascadia Mono", Consolas, monospace; }
+      textarea { height: 190px; resize: vertical; font-size: 11px; line-height: 1.45; }
+      .hint { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+      .tag { display: inline-block; padding: 1px 7px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); font-size: 11px; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>browser-mcp 图标工作台</h1>
+      <p>
+        这里画的是 <code>tools/icon-artwork.mjs</code> 里的同一份参数：SVG 是唯一真相，canvas 负责按像素栅格化。
+        定稿后跑 <code>npm run icon:build</code> 落盘到 <code>icons/</code>。
+      </p>
+    </header>
+
+    <main>
+      <div>
+        <section>
+          <h2>配色 / 图形</h2>
+          <label for="theme">配色</label>
+          <select id="theme"></select>
+          <label for="variant">图形</label>
+          <select id="variant"></select>
+          <label for="detail">光学档位（默认按尺寸自动）</label>
+          <select id="detail">
+            <option value="">自动</option>
+            <option value="full">full（≥64px）</option>
+            <option value="medium">medium（32~63px）</option>
+            <option value="small">small（≤24px）</option>
+          </select>
+        </section>
+
+        <section>
+          <h2>预览</h2>
+          <label for="size">主预览尺寸 <span id="sizeOut" class="tag"></span></label>
+          <input id="size" type="range" min="16" max="512" step="1" />
+          <label for="scale">放大倍数 <span id="scaleOut" class="tag"></span></label>
+          <input id="scale" type="range" min="1" max="4" step="1" />
+          <label for="stage">背景</label>
+          <select id="stage">
+            <option value="light">浅色</option>
+            <option value="dark">深色</option>
+            <option value="checker">棋盘（看透明区）</option>
+          </select>
+          <label><input id="grid" type="checkbox" style="width:auto" /> 像素网格（放大 ≥3 倍时）</label>
+        </section>
+
+        <section>
+          <h2>遮罩检查（maskable）</h2>
+          <p class="hint">平台把图标裁成圆形 / 圆角方形时，主图形是否还在安全区内。</p>
+          <div class="row" style="margin-top:10px">
+            <button id="maskCircle">圆形</button>
+            <button id="maskSquircle">圆角方形</button>
+            <button id="maskOff">关闭</button>
+          </div>
+        </section>
+
+        <section>
+          <h2>导出</h2>
+          <div class="row">
+            <button id="dlCurrent">下载当前尺寸 PNG</button>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button id="dlAll">下载 16/32/48/128/256/512 PNG</button>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button id="dlSvg">icon.svg</button>
+            <button id="dlMaskable">icon-maskable.svg</button>
+            <button id="dlLockup">logo-lockup.svg</button>
+          </div>
+          <p class="hint">浏览器可能询问「是否允许下载多个文件」，选允许即可。</p>
+        </section>
+      </div>
+
+      <div>
+        <section>
+          <h2>主预览</h2>
+          <div id="stage" class="stage light">
+            <div id="mainFrame" class="frame">
+              <canvas id="main"></canvas>
+              <div class="grid"></div>
+            </div>
+          </div>
+          <div id="strip" class="strip"></div>
+        </section>
+
+        <section>
+          <h2>SVG 源码（当前参数）</h2>
+          <textarea id="source" readonly spellcheck="false"></textarea>
+          <div class="row" style="margin-top:8px">
+            <button id="copy">复制</button>
+            <button id="reload">重绘</button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script type="module">
+      import {
+        THEMES,
+        VARIANTS,
+        ICON_SIZES,
+        detailFor,
+        buildIconSvg,
+        buildLockupSvg,
+      } from './icon-artwork.mjs';
+
+      const $ = (id) => document.getElementById(id);
+      const state = {
+        theme: 'xhs',
+        variant: 'spark',
+        detail: '',
+        size: 128,
+        scale: 2,
+        stage: 'light',
+        mask: 'off',
+      };
+
+      /* ---- 初始化控件 ---- */
+      for (const [key, theme] of Object.entries(THEMES)) {
+        $('theme').add(new Option(theme.label, key));
+      }
+      for (const [key, label] of Object.entries(VARIANTS)) {
+        $('variant').add(new Option(`${key} — ${label}`, key));
+      }
+      $('size').value = String(state.size);
+      $('scale').value = String(state.scale);
+
+      const opts = (overrides = {}) => ({
+        theme: state.theme,
+        variant: state.variant,
+        detail: state.detail || undefined,
+        ...overrides,
+      });
+
+      /** SVG 源码 → <img>（浏览器自带矢量栅格化） */
+      function svgToImage(svg) {
+        return new Promise((resolve, reject) => {
+          const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+          const img = new Image();
+          img.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(img);
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('SVG 加载失败'));
+          };
+          img.src = url;
+        });
+      }
+
+      /** 按设备像素比把图标画到 canvas 上，避免高分屏发虚 */
+      async function paint(canvas, cssSize, overrides = {}) {
+        const dpr = window.devicePixelRatio || 1;
+        const px = Math.max(1, Math.round(cssSize * dpr));
+        const svg = buildIconSvg(opts({ size: px, ...overrides }));
+        const img = await svgToImage(svg);
+        canvas.width = px;
+        canvas.height = px;
+        canvas.style.width = `${cssSize}px`;
+        canvas.style.height = `${cssSize}px`;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, px, px);
+        ctx.drawImage(img, 0, 0, px, px);
+        return svg;
+      }
+
+      function toPngBlob(canvas) {
+        return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      }
+
+      function download(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.append(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+      }
+
+      /* ---- 尺寸阶梯：1× 与 2× 对照，检查小尺寸细节衰减 ---- */
+      const STRIP = [
+        { size: 16, scale: 2 },
+        { size: 32, scale: 2 },
+        { size: 48, scale: 2 },
+        { size: 128, scale: 1 },
+      ];
+
+      async function renderStrip() {
+        const strip = $('strip');
+        strip.textContent = '';
+        for (const { size, scale } of STRIP) {
+          const figure = document.createElement('figure');
+          const frame = document.createElement('div');
+          frame.className = 'frame';
+          const canvas = document.createElement('canvas');
+          frame.append(canvas);
+          const caption = document.createElement('figcaption');
+          caption.textContent = `${size}px${scale > 1 ? ` @${scale}×` : ''} · ${detailFor(size)}`;
+          figure.append(frame, caption);
+          strip.append(figure);
+          /* eslint-disable no-await-in-loop */
+          await paint(canvas, size * scale, { size });
+        }
+      }
+
+      async function renderMain() {
+        const svg = await paint($('main'), state.size * state.scale);
+        $('source').value = buildIconSvg(opts({ size: 256, detail: 'full' }));
+        $('mainFrame').style.setProperty('--grid', `${state.scale}px`);
+        $('mainFrame').classList.toggle('grid-on', $('grid').checked && state.scale >= 3);
+        void svg;
+      }
+
+      async function renderAll() {
+        $('sizeOut').textContent = `${state.size}px · ${state.detail || detailFor(state.size)}`;
+        $('scaleOut').textContent = `${state.scale}×`;
+        $('stage').className = `stage ${state.stage}`;
+        $('stage').classList.toggle('masked', state.mask !== 'off');
+        $('stage').classList.remove('circle', 'squircle');
+        if (state.mask !== 'off') $('stage').classList.add(state.mask);
+        await renderMain();
+        await renderStrip();
+      }
+
+      /* ---- 交互 ---- */
+      $('theme').onchange = (e) => {
+        state.theme = e.target.value;
+        renderAll();
+      };
+      $('variant').onchange = (e) => {
+        state.variant = e.target.value;
+        renderAll();
+      };
+      $('detail').onchange = (e) => {
+        state.detail = e.target.value;
+        renderAll();
+      };
+      $('size').oninput = (e) => {
+        state.size = Number(e.target.value);
+        renderAll();
+      };
+      $('scale').oninput = (e) => {
+        state.scale = Number(e.target.value);
+        renderAll();
+      };
+      $('stage').onchange = (e) => {
+        state.stage = e.target.value;
+        renderAll();
+      };
+      $('grid').onchange = renderAll;
+      $('maskCircle').onclick = () => {
+        state.mask = state.mask === 'circle' ? 'off' : 'circle';
+        renderAll();
+      };
+      $('maskSquircle').onclick = () => {
+        state.mask = state.mask === 'squircle' ? 'off' : 'squircle';
+        renderAll();
+      };
+      $('maskOff').onclick = () => {
+        state.mask = 'off';
+        renderAll();
+      };
+      $('reload').onclick = renderAll;
+
+      $('dlCurrent').onclick = async () => {
+        const canvas = document.createElement('canvas');
+        await paint(canvas, state.size);
+        download(await toPngBlob(canvas), `icon-${state.size}.png`);
+      };
+
+      $('dlAll').onclick = async () => {
+        for (const size of ICON_SIZES) {
+          const canvas = document.createElement('canvas');
+          /* eslint-disable no-await-in-loop */
+          await paint(canvas, size);
+          // eslint-disable-next-line no-await-in-loop
+          download(await toPngBlob(canvas), `icon-${size}.png`);
+          // eslint-disable-next-line no-await-in-loop
+          await new Promise((r) => setTimeout(r, 250));
+        }
+      };
+
+      $('dlSvg').onclick = () =>
+        download(new Blob([buildIconSvg(opts({ size: 256, detail: 'full' }))], { type: 'image/svg+xml' }), 'icon.svg');
+      $('dlMaskable').onclick = () =>
+        download(
+          new Blob([buildIconSvg(opts({ size: 256, detail: 'full', maskable: true }))], { type: 'image/svg+xml' }),
+          'icon-maskable.svg',
+        );
+      $('dlLockup').onclick = () =>
+        download(new Blob([buildLockupSvg(opts())], { type: 'image/svg+xml' }), 'logo-lockup.svg');
+      $('copy').onclick = async () => {
+        await navigator.clipboard.writeText($('source').value);
+        $('copy').textContent = '已复制';
+        setTimeout(() => ($('copy').textContent = '复制'), 1200);
+      };
+
+      renderAll();
+    </script>
+  </body>
+</html>
+

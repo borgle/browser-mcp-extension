@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ABM 浏览器助手</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="app">
+      <!-- 固定在顶部：品牌 + 连接状态。切到任何视图都能一眼看到状态 -->
+      <header class="app-header">
+        <div class="brand">
+          <img class="brand-logo" src="../icons/icon-128.png" alt="" width="28" height="28" aria-hidden="true" />
+          <div class="brand-text">
+            <h1>ABM 浏览器助手</h1>
+            <span class="version" id="version"></span>
+          </div>
+        </div>
+        <span class="pill" id="status-pill" role="status" aria-live="polite">
+          <span class="dot" id="status-dot"></span>
+          <span id="status-text">检测中</span>
+        </span>
+      </header>
+
+      <!-- 三个视图：概览（默认看这个）/ 设置 / 关于 -->
+      <nav class="tabs" role="tablist" aria-label="视图切换">
+        <button class="tab" id="tab-overview" role="tab" aria-selected="true" aria-controls="panel-overview" type="button">概览</button>
+        <button class="tab" id="tab-settings" role="tab" aria-selected="false" aria-controls="panel-settings" type="button">设置</button>
+        <button class="tab" id="tab-about" role="tab" aria-selected="false" aria-controls="panel-about" type="button">关于</button>
+      </nav>
+
+      <!-- ================= 概览：状态 + 主操作 + 通知 ================= -->
+      <section class="panel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
+        <section class="card">
+          <div class="row">
+            <span class="label">服务器</span>
+            <span class="value mono" id="status-server">—</span>
+          </div>
+          <div class="row">
+            <span class="label">API Key</span>
+            <span class="value" id="status-key">—</span>
+          </div>
+          <div class="row">
+            <span class="label">扩展 ID</span>
+            <span class="value mono" id="status-ext-id">—</span>
+            <button class="icon-btn" id="copy-ext-id" type="button">复制</button>
+          </div>
+          <p class="alert" id="status-alert" hidden></p>
+          <div class="btn-row">
+            <button id="btn-connect" class="btn primary block" type="button">连接</button>
+            <button id="btn-disconnect" class="btn block" type="button">断开</button>
+          </div>
+        </section>
+
+        <!-- 没配 Key 时的引导，配好自动隐藏 -->
+        <section class="card" id="onboarding" hidden>
+          <ol class="steps">
+            <li>打开 <a id="link-home" href="https://abm.borgle.io" target="_blank" rel="noreferrer">ABM 管理台</a>，注册并创建 API Key</li>
+            <li>把「服务器地址」改成你的服务，例如 <code>http://127.0.0.1:18050</code></li>
+            <li>粘进 API Key，点「保存并连接」</li>
+          </ol>
+          <div class="btn-row">
+            <button id="btn-goto-settings" class="btn primary block" type="button">去设置</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>通知 <span class="badge" id="notice-badge" hidden></span></h2>
+          </div>
+          <ul class="notices" id="notice-list"></ul>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h2>常用操作</h2></div>
+          <div class="link-list">
+            <button class="link-row" id="quick-bridge" type="button">
+              <span class="link-title">打开视频桥页面</span>
+              <span class="link-meta" id="quick-bridge-url">—</span>
+            </button>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= 设置：连接 + 下载权限 ================= -->
+      <section class="panel" id="panel-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
+        <section class="card">
+          <div class="card-head"><h2>连接设置</h2></div>
+          <label class="field">
+            <span class="label">服务器地址</span>
+            <input id="server-url" type="text" placeholder="https://your-abm-server" spellcheck="false" autocomplete="off" />
+          </label>
+          <label class="field">
+            <span class="label">
+              API Key
+              <a class="inline-link" id="link-get-key" href="https://abm.borgle.io" target="_blank" rel="noreferrer">管理 API Key</a>
+            </span>
+            <span class="input-wrap">
+              <input id="api-key" type="password" placeholder="输入你的 API Key" spellcheck="false" autocomplete="off" />
+              <button id="toggle-key" class="icon-btn" type="button" aria-label="显示或隐藏 API Key">显示</button>
+            </span>
+          </label>
+          <label class="switch">
+            <input id="auto-reconnect" type="checkbox" />
+            <span>断线自动重连（扩展被浏览器回收后也会自动恢复）</span>
+          </label>
+          <div class="btn-row">
+            <button id="btn-save" class="btn" type="button">保存</button>
+            <button id="btn-connect-2" class="btn primary block" type="button">保存并连接</button>
+          </div>
+          <p class="hint">同一把 Key 用于扩展连接、MCP 客户端和视频桥。Key 只保存在当前浏览器。</p>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>下载权限</h2>
+            <span class="count" id="perm-count"></span>
+          </div>
+          <p class="hint">
+            扩展自己下载文件（视频 URL 通道、按 URL 取图）时需要域名授权。
+            本机后端（<code>127.0.0.1</code> / <code>localhost</code>）安装时已授予，标为「内置」且不可移除；
+            其他站点可自行添加，也可以随时移除。
+          </p>
+          <label class="switch">
+            <input id="all-hosts" type="checkbox" />
+            <span>一键允许所有网站</span>
+          </label>
+          <div class="field-row">
+            <input id="host-input" type="text" placeholder="输入域名，如 example.com" spellcheck="false" autocomplete="off" />
+            <button id="btn-add-host" class="btn" type="button">添加</button>
+          </div>
+          <div class="chips" id="host-list"></div>
+        </section>
+      </section>
+
+      <!-- ================= 关于：说明 / 链接 / 诊断 ================= -->
+      <section class="panel" id="panel-about" role="tabpanel" aria-labelledby="tab-about" hidden>
+        <section class="card">
+          <div class="card-head"><h2>简介</h2></div>
+          <p class="about-desc">
+            ABM 是 <strong>a browser mcp</strong> 的简称。扩展通过 MCP 协议把用户浏览器安全接入 AI，
+            提供导航、点击、填表、数据提取、网络抓包和文件投递能力。
+          </p>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h2>文档与支持</h2></div>
+          <div class="link-list">
+            <a class="link-row ext" id="link-docs" href="#" target="_blank" rel="noreferrer">
+              <span class="link-title">使用说明</span>
+              <span class="link-meta">安装、连接、19 个工具清单与联调步骤</span>
+            </a>
+            <a class="link-row ext" id="link-repo" href="#" target="_blank" rel="noreferrer">
+              <span class="link-title">GitHub 仓库</span>
+              <span class="link-meta" id="link-repo-url">—</span>
+            </a>
+            <a class="link-row ext" id="link-issues" href="#" target="_blank" rel="noreferrer">
+              <span class="link-title">问题反馈</span>
+              <span class="link-meta">提交 issue 或功能建议</span>
+            </a>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h2>诊断</h2></div>
+          <pre class="log" id="tool-log">暂无工具调用记录</pre>
+          <div class="btn-row">
+            <button id="btn-copy-diagnostics" class="btn block" type="button">复制诊断信息</button>
+          </div>
+          <p class="hint">反馈问题时把诊断信息贴进 issue，能省一轮来回。</p>
+        </section>
+      </section>
+
+      <footer class="app-footer">ABM · a browser mcp · 19 个浏览器能力</footer>
+    </div>
+    <div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

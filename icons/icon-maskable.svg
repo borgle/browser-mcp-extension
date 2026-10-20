@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 由 tools/icon-build.mjs 从 tools/icon-artwork.mjs 生成，请勿手改 -->
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg-mcp-cursor-full-m" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5A93FF"/>
+      <stop offset="1" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="sheen-mcp-cursor-full-m" x1="0" y1="0" x2="0" y2="256" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.16"/>
+      <stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0.03"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="inner-mcp-cursor-full-m" x1="0" y1="150" x2="0" y2="256" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.16"/>
+    </linearGradient>
+    <linearGradient id="shadow-mcp-cursor-full-m" x1="0" y1="190" x2="0" y2="220" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#001C52" stop-opacity="0"/>
+      <stop offset="0.27" stop-color="#001C52" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#001C52" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <path d="M 0 0 H 256 A 0 0 0 0 1 256 0 V 256 A 0 0 0 0 1 256 256 H 0 A 0 0 0 0 1 0 256 V 0 A 0 0 0 0 1 0 0 Z" fill="url(#bg-mcp-cursor-full-m)"/>
+    <path d="M 0 0 H 256 A 0 0 0 0 1 256 0 V 150 H 0 V 0 A 0 0 0 0 1 0 0 Z" fill="url(#sheen-mcp-cursor-full-m)"/>
+    <path d="M 0 150 H 256 V 256 A 0 0 0 0 1 256 256 H 0 A 0 0 0 0 1 0 256 Z" fill="url(#inner-mcp-cursor-full-m)"/>
+  <g transform="translate(128 128) scale(0.76) translate(-128 -128)">
+    <path d="M 66 58 H 190 A 22 22 0 0 1 212 80 V 198 A 22 22 0 0 1 190 220 H 66 A 22 22 0 0 1 44 198 V 80 A 22 22 0 0 1 66 58 Z" fill="url(#shadow-mcp-cursor-full-m)"/>
+    <path d="M 66 58 H 190 A 22 22 0 0 1 212 80 V 176 A 22 22 0 0 1 190 198 H 66 A 22 22 0 0 1 44 176 V 80 A 22 22 0 0 1 66 58 Z" fill="#FFFFFF"/>
+    <path d="M 75 76 H 181 A 11 11 0 0 1 192 87 V 87 A 11 11 0 0 1 181 98 H 75 A 11 11 0 0 1 64 87 V 87 A 11 11 0 0 1 75 76 Z" fill="#2563EB"/>
+    <circle cx="78" cy="87" r="4.5" fill="#FFFFFF" opacity="0.95"/>
+      <circle cx="93" cy="87" r="4.5" fill="#FFFFFF" opacity="0.7"/>
+      <circle cx="108" cy="87" r="4.5" fill="#FFFFFF" opacity="0.45"/>
+    <path d="M 100 116 L 100 159.85 L 118.37 150.1 L 130.91 172 L 143.46 168.36 L 131.86 147.64 L 156 146.41 Z" fill="#2563EB"/>
+  </g>
+</svg>

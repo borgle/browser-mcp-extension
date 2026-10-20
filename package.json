@@ -1,0 +1,25 @@
+{
+  "name": "abm-browser-extension",
+  "version": "2.0.0",
+  "private": true,
+  "description": "ABM（a browser mcp） 浏览器扩展",
+  "type": "module",
+  "scripts": {
+    "test": "node test/parity.mjs && node test/protocol.test.mjs && node test/attribution.test.mjs && node test/storage.test.mjs && node test/host-input.test.mjs && node test/permissions.test.mjs && node test/injection-contract.test.mjs && node test/inject-script.test.mjs && node test/bridge-video.test.mjs && node test/bridge-origin.test.mjs && node test/icon.test.mjs && node test/reuse.test.mjs && node test/navigate.test.mjs && node test/tool-result.test.mjs",
+    "syntax": "node test/syntax.mjs",
+    "preview": "node tools/popup-preview.mjs",
+    "package:extension": "node scripts/package-extension.mjs",
+    "package:extension:source": "node scripts/package-extension.mjs --no-minify",
+    "icon:build": "node tools/icon-build.mjs",
+    "icon:build:mcp": "node tools/icon-build.mjs --theme=mcp",
+    "icon:build:ink": "node tools/icon-build.mjs --theme=ink",
+    "icon:build:shipped": "node tools/icon-build.mjs --theme=mcp --variant=cursor",
+    "icon:lab": "node tools/icon-lab.mjs"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@napi-rs/canvas": "^1.0.11",
+    "crx3": "^2.0.0",
+    "esbuild": "^0.28.2"
+  }
+}
