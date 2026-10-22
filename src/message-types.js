@@ -14,6 +14,5 @@ export const POPUP_MSG = Object.freeze({
   ADD_HOST_TO_STORAGE: 'abm.popup.addHostToStorage',
 
   STATUS_CHANGED: 'ABM_SERVER_STATUS_CHANGED',
-  TOOL_RESULT_UPDATE: 'ABM_TOOL_RESULT_UPDATE',
 });
 

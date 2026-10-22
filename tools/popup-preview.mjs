@@ -114,7 +114,16 @@ globalThis.chrome = {
         const reply = (payload) => callback && callback(payload);
         if (type === 'abm.popup.getConfig') return reply({ success: true, config: previewState.config });
         if (type === 'abm.popup.saveConfig') {
-          previewState.config = { ...previewState.config, ...(message.payload || {}) };
+          const patch = message.payload || {};
+          previewState.config = { ...previewState.config, ...patch };
+          if (patch.serverBaseUrl !== undefined || patch.apiKey !== undefined) {
+            previewState.status = {
+              ...previewState.status,
+              connected: false,
+              reconnecting: false,
+              serverBaseUrl: previewState.config.serverBaseUrl,
+            };
+          }
           return reply({ success: true, config: previewState.config });
         }
         if (type === 'abm.popup.getStatus') return reply({ success: true, status: previewState.status });
@@ -211,11 +220,6 @@ window.__previewSetStatus = (status) => {
     listener({ type: 'ABM_SERVER_STATUS_CHANGED', payload: previewState.status });
   }
 };
-window.__previewToolResult = (payload) => {
-  for (const listener of previewState.listeners) {
-    listener({ type: 'ABM_TOOL_RESULT_UPDATE', payload });
-  }
-};
 window.__previewFailNextPermissionRequest = () => {
   previewState.permissions.failNextRequest = true;
 };
@@ -228,7 +232,6 @@ const toolbar = `
   <button onclick="__previewSetStatus({connected:false,reconnecting:false,authRejected:false,lastError:'WebSocket 连接失败'})">未连接</button>
   <button onclick="__previewSetStatus({connected:false,reconnecting:true})">重连中</button>
   <button onclick="__previewSetStatus({connected:false,reconnecting:false,authRejected:true,lastError:'API Key 已失效'})">Key 失效</button>
-  <button onclick="__previewToolResult({tool:'browser_navigate',ok:true,url:'http://127.0.0.1:18050/test-page.html'})">工具结果</button>
   <button onclick="__previewFailNextPermissionRequest()">模拟权限被拒</button>
 </div>
 <style>body{padding-bottom:56px}</style>

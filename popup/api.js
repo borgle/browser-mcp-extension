@@ -22,7 +22,7 @@ export const api = {
   getStatus: () => sendToBackground(POPUP_MSG.GET_STATUS),
   /** 读取连接配置 */
   getConfig: () => sendToBackground(POPUP_MSG.GET_CONFIG),
-  /** 保存连接配置（保存后会断开旧连接） */
+  /** 保存连接配置（改服务器或 Key 会断开旧连接） */
   saveConfig: (config) => sendToBackground(POPUP_MSG.SAVE_CONFIG, config),
   /** 用当前配置（或传入的 serverBaseUrl/apiKey）连接 */
   connect: (params) => sendToBackground(POPUP_MSG.CONNECT, params),

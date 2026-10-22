@@ -2,11 +2,11 @@
  * popup 交互逻辑（原生 JS，无构建步骤）。
  *
  * 视图划分（顶部固定品牌与状态胶囊，下面三个视图切换）：
- *   概览：状态 + 主操作 + 通知 + 快捷入口 —— 平时只要看这一屏
- *   设置：连接设置 + 下载权限 —— 只有要改配置时才进来
- *   关于：版本 / 扩展 ID / 使用说明与仓库链接 / 诊断信息
+ *   概览：连接状态 + 就地编辑的服务器/API Key + 主操作 + 通知 —— 平时只要看这一屏
+ *   设置：下载权限 —— 只有要调整域名授权时才进来
+ *   关于：简介 / 文档与仓库链接 / 视频桥快捷入口
  *
- * 交互约定：异步动作有 busy → toast 反馈；报错尽量给可行动的下一步（例如「去设置」）。
+ * 交互约定：异步动作有 busy → toast 反馈；服务器和 API Key 点「编辑」后就地修改。
  */
 import { api } from './api.js';
 import { POPUP_MSG } from '../src/message-types.js';
@@ -31,6 +31,13 @@ const STATUS_STYLE = {
 };
 
 const VIEWS = ['overview', 'settings', 'about'];
+
+/** 已保存的连接配置；就地编辑保存后同步更新 */
+let currentConfig = {};
+/** 最近一次连接状态，供保存配置时判断是否需要提示重新连接 */
+let lastStatus = {};
+/** 当前展开的编辑器：'' | 'server' | 'key' */
+let activeEditor = '';
 
 // ---------------------------------------------------------------- 反馈
 
@@ -86,22 +93,28 @@ function switchView(view) {
 // ---------------------------------------------------------------- 连接状态
 
 function renderStatus(status) {
-  const kind = status?.authRejected
+  lastStatus = status || {};
+  const kind = lastStatus.authRejected
     ? 'rejected'
-    : status?.connected
+    : lastStatus.connected
       ? 'connected'
-      : status?.reconnecting
+      : lastStatus.reconnecting
         ? 'reconnecting'
         : 'disconnected';
   const [level, label] = STATUS_STYLE[kind];
 
   $('status-pill').className = `pill ${level}`;
   $('status-text').textContent = label;
-  $('status-server').textContent = status?.serverBaseUrl || '—';
-  renderBridgeUrl(status?.serverBaseUrl);
+  // 已连接/重连中显示实际连接地址；未连接时以已保存配置为准（保存后即可看到新地址）。
+  const serverBaseUrl =
+    lastStatus.connected || lastStatus.reconnecting
+      ? lastStatus.serverBaseUrl || currentConfig.serverBaseUrl
+      : currentConfig.serverBaseUrl || lastStatus.serverBaseUrl;
+  $('status-server').textContent = serverBaseUrl || '—';
+  renderBridgeUrl(serverBaseUrl);
 
   const alert = $('status-alert');
-  if (status?.authRejected) {
+  if (lastStatus.authRejected) {
     alert.hidden = false;
     alert.className = 'alert err';
     alert.textContent = '这把 API Key 已失效或被吊销，自动重连已停止。';
@@ -110,19 +123,19 @@ function renderStatus(status) {
     fix.type = 'button';
     fix.textContent = '打开账号管理';
     fix.addEventListener('click', () => {
-      openUrl(portalUrl($('server-url').value.trim() || SERVICE_HOME, '/console'));
+      openUrl(portalUrl(currentConfig.serverBaseUrl || SERVICE_HOME, '/console'));
     });
     alert.appendChild(fix);
-  } else if (status?.lastError) {
+  } else if (lastStatus.lastError) {
     alert.hidden = false;
     alert.className = 'alert warn';
-    alert.textContent = `连接错误：${status.lastError}`;
+    alert.textContent = `连接错误：${lastStatus.lastError}`;
   } else {
     alert.hidden = true;
   }
 
-  $('btn-connect').disabled = status?.connected === true;
-  $('btn-disconnect').disabled = status?.connected !== true;
+  $('btn-connect').disabled = lastStatus.connected === true;
+  $('btn-disconnect').disabled = lastStatus.connected !== true;
 }
 
 async function refreshStatus() {
@@ -161,6 +174,7 @@ async function loadConfig() {
   const res = await api.getConfig();
   if (!res.success) return;
   const config = res.config || {};
+  currentConfig = config;
   $('server-url').value = config.serverBaseUrl || '';
   $('api-key').value = config.apiKey || '';
   $('auto-reconnect').checked = config.autoReconnect !== false;
@@ -172,52 +186,118 @@ async function loadConfig() {
   $('link-get-key').href = portalUrl(config.serverBaseUrl, '/console');
 }
 
-function readForm() {
-  return {
-    serverBaseUrl: $('server-url').value.trim(),
-    apiKey: $('api-key').value.trim(),
-    autoReconnect: $('auto-reconnect').checked,
-  };
+/** 展开某一项的就地编辑器；同时只允许一个编辑器展开 */
+function startEditor(kind) {
+  if (activeEditor && activeEditor !== kind) closeEditor(activeEditor);
+  activeEditor = kind;
+  $(`${kind}-view`).hidden = true;
+  $(`${kind}-edit`).hidden = false;
+  $(`edit-${kind}`).setAttribute('aria-expanded', 'true');
+  const input = $(kind === 'server' ? 'server-url' : 'api-key');
+  input.focus();
+  input.select();
 }
 
-async function onSave(options = {}) {
-  const form = readForm();
-  if (!form.serverBaseUrl) {
-    switchView('settings');
-    $('server-url').focus();
-    toast('请先填写服务器地址', 'err');
-    return false;
+/** 收起编辑器并恢复成已保存的值 */
+function closeEditor(kind) {
+  if (activeEditor === kind) activeEditor = '';
+  $(`${kind}-view`).hidden = false;
+  $(`${kind}-edit`).hidden = true;
+  $(`edit-${kind}`).setAttribute('aria-expanded', 'false');
+
+  if (kind === 'server') {
+    $('server-url').value = currentConfig.serverBaseUrl || '';
+    return;
   }
-  const button = options.button || $('btn-save');
+  const input = $('api-key');
+  input.value = currentConfig.apiKey || '';
+  input.type = 'password';
+  $('toggle-key').textContent = '显示';
+}
+
+/** 保存单个字段。保存服务器/Key 会断开旧连接，需要用户重新点「连接」。 */
+async function saveField(kind) {
+  const isServer = kind === 'server';
+  const input = $(isServer ? 'server-url' : 'api-key');
+  const value = input.value.trim();
+  if (isServer && !value) {
+    input.focus();
+    toast('请填写服务器地址', 'err');
+    return;
+  }
+
+  const button = $(`save-${kind}`);
+  if (button.disabled) return;
+
+  const savedValue = isServer
+    ? currentConfig.serverBaseUrl || ''
+    : currentConfig.apiKey || '';
+  if (value === savedValue) {
+    closeEditor(kind);
+    toast('没有改动');
+    return;
+  }
+
+  const wasActive = lastStatus.connected === true || lastStatus.reconnecting === true;
+  const patch = isServer ? { serverBaseUrl: value } : { apiKey: value };
   const done = withBusy(button, '保存中…');
   try {
-    const res = await api.saveConfig(form);
+    const res = await api.saveConfig(patch);
     if (!res.success) {
       toast(res.error || '保存失败', 'err');
-      return false;
+      return;
     }
-    toast('配置已保存', 'ok');
+    currentConfig = res.config || { ...currentConfig, ...patch };
+    closeEditor(kind);
     await loadConfig();
-    return true;
+    await refreshStatus();
+    toast(
+      wasActive ? '已保存，连接已断开，请重新连接' : '已保存',
+      'ok',
+    );
   } finally {
     done();
   }
 }
 
+async function onToggleAutoReconnect(event) {
+  const want = event.target.checked;
+  event.target.disabled = true;
+  try {
+    const res = await api.saveConfig({ autoReconnect: want });
+    if (!res.success) {
+      event.target.checked = !want;
+      toast(res.error || '保存失败', 'err');
+      return;
+    }
+    currentConfig = res.config || { ...currentConfig, autoReconnect: want };
+    toast(want ? '已开启自动重连' : '已关闭自动重连', 'ok');
+  } finally {
+    event.target.disabled = false;
+  }
+}
+
 async function onConnect() {
-  if (!(await onSave({ button: $('btn-connect-2') }))) return;
-  const form = readForm();
-  if (!form.apiKey) {
-    switchView('settings');
-    $('api-key').focus();
+  if (activeEditor) {
+    toast('请先保存或取消正在编辑的设置', 'err');
+    return;
+  }
+  if (!currentConfig.serverBaseUrl) {
+    startEditor('server');
+    toast('请先填写服务器地址', 'err');
+    return;
+  }
+  if (!currentConfig.apiKey) {
+    startEditor('key');
     toast('请先填写 API Key', 'err');
     return;
   }
+
   const done = withBusy($('btn-connect'), '连接中…');
   try {
     const res = await api.connect({
-      serverBaseUrl: form.serverBaseUrl,
-      apiKey: form.apiKey,
+      serverBaseUrl: currentConfig.serverBaseUrl,
+      apiKey: currentConfig.apiKey,
     });
     toast(res.success ? '已发起连接' : res.error || '连接失败', res.success ? 'ok' : 'err');
   } finally {
@@ -418,51 +498,10 @@ async function refreshNotices() {
   }
 }
 
-// ---------------------------------------------------------------- 关于 / 诊断
+// ---------------------------------------------------------------- 关于
 
-let lastToolResult = null;
-
-function renderToolResult(payload) {
-  lastToolResult = payload;
-  const el = $('tool-log');
-  if (payload && typeof payload === 'object' && payload.name) {
-    const status = payload.status === 'ok' ? '成功' : '失败';
-    const header = [payload.name, status, `${payload.durationMs ?? 0}ms`].join(' · ');
-    const body =
-      payload.status === 'ok'
-        ? payload.text
-        : payload.error?.message || payload.error?.code || '';
-    el.textContent = [header, body].filter(Boolean).join('\n');
-    return;
-  }
-
-  let text;
-  if (typeof payload === 'string') {
-    text = payload;
-  } else {
-    try {
-      text = JSON.stringify(payload, null, 2);
-    } catch {
-      text = String(payload);
-    }
-  }
-  el.textContent = text;
-}
-
-function describeLastToolResult() {
-  if (!lastToolResult) return '-';
-  if (typeof lastToolResult === 'object' && lastToolResult.name) {
-    return `${lastToolResult.name} · ${lastToolResult.status === 'ok' ? '成功' : '失败'} · ${lastToolResult.durationMs ?? 0}ms`;
-  }
-  try {
-    return JSON.stringify(lastToolResult).slice(0, 200);
-  } catch {
-    return String(lastToolResult).slice(0, 200);
-  }
-}
-
-function setupAbout(config = {}, status = {}) {
-  // 「关于」只放说明性内容与文档链接；动作类入口（打开视频桥）留在「概览」，
+function setupAbout(config = {}) {
+  // 「关于」放说明性内容、文档链接和视频桥快捷入口；
   // 名称/版本/扩展 ID 都由顶部与概览显示，这里不重复。
 
   const repo = PROJECT_LINKS.repo;
@@ -480,13 +519,10 @@ function setupAbout(config = {}, status = {}) {
     const ok = await copyText(chrome.runtime.id || '');
     toast(ok ? '扩展 ID 已复制' : '复制失败，请手动选择', ok ? 'ok' : 'err');
   });
-  $('btn-copy-diagnostics').addEventListener('click', async () => {
-    const ok = await copyText(buildDiagnostics(config, status));
-    toast(ok ? '诊断信息已复制' : '复制失败', ok ? 'ok' : 'err');
+  $('quick-bridge').addEventListener('click', () => {
+    const bridge = renderBridgeUrl(currentConfig.serverBaseUrl || config?.serverBaseUrl);
+    if (bridge) openUrl(bridge);
   });
-  $('quick-bridge').addEventListener('click', () =>
-    openUrl(renderBridgeUrl($('status-server').textContent)),
-  );
 }
 
 async function copyText(text) {
@@ -496,19 +532,6 @@ async function copyText(text) {
   } catch {
     return false;
   }
-}
-
-function buildDiagnostics(config, status) {
-  return [
-    `扩展: ABM 浏览器助手 v${chrome.runtime.getManifest().version}`,
-    `扩展 ID: ${chrome.runtime.id}`,
-    `服务器: ${status?.serverBaseUrl || config?.serverBaseUrl || '-'}`,
-    `连接状态: ${status?.connected ? '已连接' : status?.reconnecting ? '重连中' : '未连接'}`,
-    `API Key: ${maskKey(config?.apiKey)}`,
-    `自动重连: ${config?.autoReconnect !== false}`,
-    `最近一次工具调用: ${describeLastToolResult()}`,
-    `时间: ${new Date().toISOString()}`,
-  ].join('\n');
 }
 
 // ---------------------------------------------------------------- 初始化
@@ -527,24 +550,31 @@ function bindEvents() {
   }
 
   $('btn-connect').addEventListener('click', onConnect);
-  $('btn-connect-2').addEventListener('click', onConnect);
   $('btn-disconnect').addEventListener('click', onDisconnect);
-  $('btn-save').addEventListener('click', () => onSave());
-  $('btn-goto-settings').addEventListener('click', () => {
-    switchView('settings');
-    $('api-key').focus();
-  });
+  $('btn-edit-key-from-onboarding').addEventListener('click', () => startEditor('key'));
   $('btn-add-host').addEventListener('click', onAddHost);
   $('all-hosts').addEventListener('change', onToggleAllHosts);
+  $('auto-reconnect').addEventListener('change', onToggleAutoReconnect);
+
+  for (const kind of ['server', 'key']) {
+    $(`edit-${kind}`).addEventListener('click', () => startEditor(kind));
+    $(`save-${kind}`).addEventListener('click', () => saveField(kind));
+    $(`cancel-${kind}`).addEventListener('click', () => closeEditor(kind));
+    const input = $(kind === 'server' ? 'server-url' : 'api-key');
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        saveField(kind);
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        closeEditor(kind);
+      }
+    });
+  }
 
   $('host-input').addEventListener('keydown', (event) => {
     if (event.key === 'Enter') onAddHost();
   });
-  for (const id of ['server-url', 'api-key']) {
-    $(id).addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') onConnect();
-    });
-  }
   $('toggle-key').addEventListener('click', () => {
     const input = $('api-key');
     const reveal = input.type === 'password';
@@ -555,10 +585,6 @@ function bindEvents() {
   chrome.runtime.onMessage.addListener((message) => {
     if (message?.type === POPUP_MSG.STATUS_CHANGED) {
       renderStatus(message.payload);
-      return;
-    }
-    if (message?.type === POPUP_MSG.TOOL_RESULT_UPDATE) {
-      renderToolResult(message.payload);
     }
   });
 }
@@ -567,15 +593,12 @@ async function init() {
   $('version').textContent = `v${chrome.runtime.getManifest().version}`;
   $('status-ext-id').textContent = chrome.runtime.id || '—';
   switchView('overview'); // 默认落在概览
+
+  // 先拿到已保存配置再绑定事件，避免用户手速快于初始化时看到空输入框。
+  await loadConfig();
+  setupAbout(currentConfig);
   bindEvents();
 
-  const configRes = await api.getConfig();
-  const config = configRes.success ? configRes.config : {};
-  const statusRes = await api.getStatus();
-  const status = statusRes.success ? statusRes.status : {};
-  setupAbout(config, status);
-
-  await loadConfig();
   await Promise.all([refreshStatus(), refreshPermissions(), refreshNotices()]);
 }
 

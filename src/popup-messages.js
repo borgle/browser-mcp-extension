@@ -56,9 +56,13 @@ export async function handlePopupMessage(message) {
     case POPUP_MSG.GET_CONFIG:
       return { success: true, config: await loadConnectionConfig() };
     case POPUP_MSG.SAVE_CONFIG: {
-      const config = await saveConnectionConfig(payload || {});
-      await wsClient.disconnect();
+      const patch = payload || {};
+      const config = await saveConnectionConfig(patch);
       wsClient.updateConfig(config);
+      // 改服务器或 Key 会让旧连接失效；只切换自动重连时保持现有连接。
+      if (patch.serverBaseUrl !== undefined || patch.apiKey !== undefined) {
+        await wsClient.disconnect();
+      }
       return { success: true, config };
     }
     case POPUP_MSG.GET_PERMISSION_STATUS:

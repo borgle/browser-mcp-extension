@@ -33,14 +33,54 @@
       <!-- ================= 概览：状态 + 主操作 + 通知 ================= -->
       <section class="panel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
         <section class="card">
-          <div class="row">
-            <span class="label">服务器</span>
-            <span class="value mono" id="status-server">—</span>
+          <div class="setting-item" id="server-setting">
+            <div class="row setting-view" id="server-view">
+              <span class="label">服务器</span>
+              <span class="value mono" id="status-server">—</span>
+              <button class="icon-btn" id="edit-server" type="button" aria-expanded="false" aria-controls="server-edit">编辑</button>
+            </div>
+            <div class="setting-edit" id="server-edit" hidden>
+              <label class="field">
+                <span class="label">服务器地址</span>
+                <input id="server-url" type="text" placeholder="https://your-abm-server" spellcheck="false" autocomplete="off" />
+              </label>
+              <div class="btn-row compact">
+                <button id="save-server" class="btn primary" type="button">保存</button>
+                <button id="cancel-server" class="btn ghost" type="button">取消</button>
+              </div>
+            </div>
           </div>
-          <div class="row">
-            <span class="label">API Key</span>
-            <span class="value" id="status-key">—</span>
+
+          <div class="setting-item" id="key-setting">
+            <div class="row setting-view" id="key-view">
+              <span class="label">API Key</span>
+              <span class="value" id="status-key">—</span>
+              <button class="icon-btn" id="edit-key" type="button" aria-expanded="false" aria-controls="key-edit">编辑</button>
+            </div>
+            <div class="setting-edit" id="key-edit" hidden>
+              <label class="field">
+                <span class="label">
+                  API Key
+                  <a class="inline-link" id="link-get-key" href="https://abm.borgle.io" target="_blank" rel="noreferrer">管理 API Key</a>
+                </span>
+                <span class="input-wrap">
+                  <input id="api-key" type="password" placeholder="输入你的 API Key" spellcheck="false" autocomplete="off" />
+                  <button id="toggle-key" class="icon-btn" type="button" aria-label="显示或隐藏 API Key">显示</button>
+                </span>
+              </label>
+              <div class="btn-row compact">
+                <button id="save-key" class="btn primary" type="button">保存</button>
+                <button id="cancel-key" class="btn ghost" type="button">取消</button>
+              </div>
+              <p class="hint">同一把 Key 用于扩展连接、MCP 客户端和视频桥。Key 只保存在当前浏览器。</p>
+            </div>
           </div>
+
+          <label class="switch">
+            <input id="auto-reconnect" type="checkbox" />
+            <span>断线自动重连（扩展被浏览器回收后也会自动恢复）</span>
+          </label>
+
           <div class="row">
             <span class="label">扩展 ID</span>
             <span class="value mono" id="status-ext-id">—</span>
@@ -57,11 +97,11 @@
         <section class="card" id="onboarding" hidden>
           <ol class="steps">
             <li>打开 <a id="link-home" href="https://abm.borgle.io" target="_blank" rel="noreferrer">ABM 管理台</a>，注册并创建 API Key</li>
-            <li>把「服务器地址」改成你的服务，例如 <code>http://127.0.0.1:18050</code></li>
-            <li>粘进 API Key，点「保存并连接」</li>
+            <li>点击上方「API Key」右侧的「编辑」，粘贴 Key</li>
+            <li>如使用自建服务，先编辑「服务器」地址，再点「连接」</li>
           </ol>
           <div class="btn-row">
-            <button id="btn-goto-settings" class="btn primary block" type="button">去设置</button>
+            <button id="btn-edit-key-from-onboarding" class="btn primary block" type="button">填写 API Key</button>
           </div>
         </section>
 
@@ -71,47 +111,10 @@
           </div>
           <ul class="notices" id="notice-list"></ul>
         </section>
-
-        <section class="card">
-          <div class="card-head"><h2>常用操作</h2></div>
-          <div class="link-list">
-            <button class="link-row" id="quick-bridge" type="button">
-              <span class="link-title">打开视频桥页面</span>
-              <span class="link-meta" id="quick-bridge-url">—</span>
-            </button>
-          </div>
-        </section>
       </section>
 
-      <!-- ================= 设置：连接 + 下载权限 ================= -->
+      <!-- ================= 设置：下载权限 ================= -->
       <section class="panel" id="panel-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
-        <section class="card">
-          <div class="card-head"><h2>连接设置</h2></div>
-          <label class="field">
-            <span class="label">服务器地址</span>
-            <input id="server-url" type="text" placeholder="https://your-abm-server" spellcheck="false" autocomplete="off" />
-          </label>
-          <label class="field">
-            <span class="label">
-              API Key
-              <a class="inline-link" id="link-get-key" href="https://abm.borgle.io" target="_blank" rel="noreferrer">管理 API Key</a>
-            </span>
-            <span class="input-wrap">
-              <input id="api-key" type="password" placeholder="输入你的 API Key" spellcheck="false" autocomplete="off" />
-              <button id="toggle-key" class="icon-btn" type="button" aria-label="显示或隐藏 API Key">显示</button>
-            </span>
-          </label>
-          <label class="switch">
-            <input id="auto-reconnect" type="checkbox" />
-            <span>断线自动重连（扩展被浏览器回收后也会自动恢复）</span>
-          </label>
-          <div class="btn-row">
-            <button id="btn-save" class="btn" type="button">保存</button>
-            <button id="btn-connect-2" class="btn primary block" type="button">保存并连接</button>
-          </div>
-          <p class="hint">同一把 Key 用于扩展连接、MCP 客户端和视频桥。Key 只保存在当前浏览器。</p>
-        </section>
-
         <section class="card">
           <div class="card-head">
             <h2>下载权限</h2>
@@ -134,7 +137,7 @@
         </section>
       </section>
 
-      <!-- ================= 关于：说明 / 链接 / 诊断 ================= -->
+      <!-- ================= 关于：说明 / 链接 / 快捷入口 ================= -->
       <section class="panel" id="panel-about" role="tabpanel" aria-labelledby="tab-about" hidden>
         <section class="card">
           <div class="card-head"><h2>简介</h2></div>
@@ -163,12 +166,13 @@
         </section>
 
         <section class="card">
-          <div class="card-head"><h2>诊断</h2></div>
-          <pre class="log" id="tool-log">暂无工具调用记录</pre>
-          <div class="btn-row">
-            <button id="btn-copy-diagnostics" class="btn block" type="button">复制诊断信息</button>
+          <div class="card-head"><h2>快捷入口</h2></div>
+          <div class="link-list">
+            <button class="link-row" id="quick-bridge" type="button">
+              <span class="link-title">打开视频桥页面</span>
+              <span class="link-meta" id="quick-bridge-url">—</span>
+            </button>
           </div>
-          <p class="hint">反馈问题时把诊断信息贴进 issue，能省一轮来回。</p>
         </section>
       </section>
 

@@ -1,7 +1,7 @@
 /* 浏览器 MCP 助手 popup：一套自洽的设计语言（与后端 bridge.html 保持一致，改样式时请同步）。
    设计原则：
    1) 首屏只回答两件事——「现在是什么状态」和「我该点哪里」；
-   2) 次要信息（连接设置/权限/日志）折叠或下沉，不抢主操作；
+   2) 次要信息（连接设置/下载权限）折叠或下沉，不抢主操作；
    3) 所有异步动作都有 loading / 成功 / 失败三态反馈；
    4) 空状态给引导，不给人一片空白。 */
 
@@ -123,6 +123,19 @@ body {
 .value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .value.mono, code { font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
 
+/* 服务器 / API Key：平时只读一行，点「编辑」原地展开表单 */
+.setting-item + .setting-item { margin-top: 6px; }
+.setting-view .icon-btn { flex: 0 0 auto; align-self: center; }
+.setting-view[hidden], .setting-edit[hidden] { display: none; }
+.setting-edit {
+  margin-top: 8px; padding: 9px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--bg);
+}
+.setting-edit .field { margin-top: 0; }
+.setting-edit .hint { margin-top: 6px; }
+.switch + .row { margin-top: 8px; }
+
 .alert {
   display: flex; gap: 8px; align-items: flex-start;
   margin: 10px 0 0; padding: 9px 10px;
@@ -171,6 +184,8 @@ input[type="text"]:disabled { opacity: 0.6; cursor: not-allowed; }
 .switch input { width: 14px; height: 14px; margin: 0; accent-color: var(--primary); }
 
 .btn-row { display: flex; gap: 8px; margin-top: 12px; }
+.btn-row.compact { margin-top: 8px; }
+.btn-row.compact .btn { padding: 5px 10px; font-size: 12px; }
 .btn {
   position: relative;
   padding: 7px 13px;
@@ -258,20 +273,12 @@ input[type="text"]:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* ---------------------------------------------------------------- 关于 */
 .about-desc { color: var(--muted); font-size: 11.5px; margin: 0; }
-.rows { display: grid; gap: 6px; margin-top: 12px; }
 
 .badge {
   min-width: 17px; padding: 0 5px; border-radius: 9px;
   background: var(--err); color: #fff; font-size: 10px; text-align: center; line-height: 16px;
 }
 .count { color: var(--muted); font-weight: 400; }
-
-.log {
-  margin: 8px 0 0; padding: 9px 10px; max-height: 132px; overflow: auto;
-  background: var(--bg); border-radius: var(--radius);
-  font: 11.5px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
-  white-space: pre-wrap; word-break: break-all;
-}
 
 .app-footer { color: var(--muted); font-size: 10.5px; text-align: center; padding: 2px 0 4px; }
 

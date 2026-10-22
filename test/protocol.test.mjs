@@ -1,14 +1,11 @@
 const local = new Map();
 const session = new Map();
-const runtimeMessages = [];
 
 globalThis.chrome = {
   runtime: {
     id: 'test-extension',
     getManifest: () => ({ version: '2.0.0' }),
-    sendMessage: async (message) => {
-      runtimeMessages.push(message);
-    },
+    sendMessage: async () => {},
     onMessage: { addListener: () => {} },
   },
   storage: {
@@ -160,15 +157,6 @@ check(
   '工具调用回执使用同一个信封 id',
   toolResult?.payload?.status === 'error',
   JSON.stringify(toolResult),
-);
-check(
-  '工具结果广播给 popup',
-  runtimeMessages.some(
-    (message) =>
-      message.type === 'ABM_TOOL_RESULT_UPDATE' &&
-      message.payload?.name === 'unknown_tool' &&
-      message.payload?.status === 'error',
-  ),
 );
 
 socket.emit('message', {

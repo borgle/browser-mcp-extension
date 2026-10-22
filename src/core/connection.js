@@ -17,7 +17,6 @@ import {
 } from '../constants.js';
 import { envelope, messageId, parseEnvelope } from './protocol.js';
 import { broadcastStatus, loadConnectionConfig } from './storage.js';
-import { broadcastToolResult } from './tool-result.js';
 import { refreshBadge, saveNotice } from '../notices/manager.js';
 import { executeTool } from '../tools/registry.js';
 
@@ -278,6 +277,7 @@ class WebSocketClient {
       apiKey: patch.apiKey ?? this.config?.apiKey,
     };
     this.shouldReconnect = this.config.autoReconnect;
+    if (patch.serverBaseUrl) this.currentBaseUrl = this.config.serverBaseUrl;
     if (patch.apiKey && previousKey && patch.apiKey !== previousKey) {
       void this.clearAuthRejection();
       if (this.socket) {
@@ -452,7 +452,6 @@ class WebSocketClient {
     const requestId = message.id;
     const name = message.payload?.name;
     const args = message.payload?.arguments || {};
-    const startedAt = Date.now();
     let response;
     try {
       const result = await executeTool({ name, args });
@@ -484,12 +483,6 @@ class WebSocketClient {
       };
     }
     this.send(envelope(MSG.TOOL_RESULT, response, requestId));
-    broadcastToolResult({
-      requestId,
-      name,
-      response,
-      durationMs: Date.now() - startedAt,
-    });
   }
 
   send(message) {
