@@ -18,6 +18,7 @@ import {
   resolvePublicKey,
   webStoreManifest,
 } from './manifest-key.mjs';
+import { normalizePackagePath, shouldMinifyFile } from './minify-policy.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const sourceManifest = JSON.parse(readFileSync(path.join(root, 'manifest.json'), 'utf8'));
@@ -80,8 +81,14 @@ function listJavaScriptFiles(directory) {
 let originalBytes = 0;
 let minifiedBytes = 0;
 let minifiedFiles = 0;
+let unminifiedFiles = 0;
 if (shouldMinify) {
   for (const filePath of listJavaScriptFiles(stagingDir)) {
+    const relativePath = normalizePackagePath(path.relative(stagingDir, filePath));
+    if (!shouldMinifyFile(relativePath)) {
+      unminifiedFiles += 1;
+      continue;
+    }
     const source = readFileSync(filePath, 'utf8');
     const result = transformSync(source, {
       loader: 'js',
@@ -132,6 +139,7 @@ console.log(`minified=${shouldMinify}`);
 console.log(`public_key_source=${configuredPublicKey ? 'configured' : 'derived'}`);
 if (shouldMinify) {
   console.log(`minified_js_files=${minifiedFiles}`);
+  console.log(`unminified_js_files=${unminifiedFiles}`);
   console.log(`js_bytes=${originalBytes}->${minifiedBytes}`);
 }
 

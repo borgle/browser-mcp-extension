@@ -71,6 +71,14 @@ GitHub Actions 会：
 ES module 依赖或 Chrome API 名称。压缩只减小体积，不提供源码保密能力；
 GitHub 仓库中的可读源码仍是审查与维护依据。
 
+### 页面注入函数不压缩
+
+`chrome.scripting.executeScript({ func })` 和 `toInjectableSource()` 会通过
+`Function.prototype.toString()` 把函数源码送到页面执行。包含这类函数的工具文件
+不参与标识符压缩，避免函数体依赖的闭包变量或辅助函数名被改写。排除列表维护在
+`scripts/minify-policy.mjs`，测试会检查所有 `executeInTab`、`func:` 和
+`toInjectableSource` 调用点都在列表中。其余 JS 仍会压缩。
+
 GitHub Release 与 Chrome Web Store 使用同一份默认压缩 ZIP；该 ZIP 不包含
 `manifest.json` 的 `key`。`.crx` 使用另一套 CRX 密钥签名，仅用于企业分发、
 受管环境和开发测试。
