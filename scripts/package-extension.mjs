@@ -13,19 +13,30 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crx3 from 'crx3';
 import { transformSync } from 'esbuild';
+import {
+  crxManifest,
+  resolvePublicKey,
+  webStoreManifest,
+} from './manifest-key.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const manifest = JSON.parse(readFileSync(path.join(root, 'manifest.json'), 'utf8'));
-const version = manifest.version;
-const keyPath = path.resolve(
+const sourceManifest = JSON.parse(readFileSync(path.join(root, 'manifest.json'), 'utf8'));
+const version = sourceManifest.version;
+const keyPathInput =
   process.env.CRX_KEY_PATH ||
-    process.argv.find((argument) => argument.startsWith('--key='))?.slice(6) ||
-    '',
-);
+  process.argv.find((argument) => argument.startsWith('--key='))?.slice(6) ||
+  '';
+const keyPath = keyPathInput ? path.resolve(keyPathInput) : '';
 
 if (!keyPath || !existsSync(keyPath)) {
   throw new Error('CRX private key not found. Set CRX_KEY_PATH or pass --key=<path>.');
 }
+
+const configuredPublicKey =
+  process.env.CRX_PUBLIC_KEY_BASE64 ||
+  process.argv.find((argument) => argument.startsWith('--public-key='))?.slice(13) ||
+  '';
+const publicKey = resolvePublicKey(readFileSync(keyPath, 'utf8'), configuredPublicKey);
 
 const buildDir = path.join(root, 'build');
 const stagingDir = path.join(buildDir, 'extension');
@@ -33,6 +44,7 @@ const baseName = `abm-browser-extension-${version}`;
 const zipPath = path.join(buildDir, `${baseName}.zip`);
 const crxPath = path.join(buildDir, `${baseName}.crx`);
 const shaPath = path.join(buildDir, `${baseName}.sha256`);
+const temporaryCrxPath = path.join(buildDir, '.webstore-signing.crx');
 const shouldMinify = !process.argv.includes('--no-minify');
 
 rmSync(stagingDir, { recursive: true, force: true });
@@ -42,6 +54,14 @@ for (const entry of ['manifest.json', 'src', 'popup', 'inject-scripts', 'icons']
   cpSync(path.join(root, entry), path.join(stagingDir, entry), {
     recursive: true,
   });
+}
+
+function writeStagedManifest(value) {
+  writeFileSync(
+    path.join(stagingDir, 'manifest.json'),
+    `${JSON.stringify(value, null, 2)}\n`,
+    'utf8',
+  );
 }
 
 function listJavaScriptFiles(directory) {
@@ -76,10 +96,24 @@ if (shouldMinify) {
   }
 }
 
+// The Web Store ZIP must not contain the CRX public key. crx3 also emits the
+// ZIP, so build it from a keyless manifest with a throwaway CRX, then inject the
+// CRX public key and build the signed CRX with the same private key.
+writeStagedManifest(webStoreManifest(sourceManifest));
+try {
+  await crx3([path.join(stagingDir, 'manifest.json')], {
+    keyPath,
+    crxPath: temporaryCrxPath,
+    zipPath,
+  });
+} finally {
+  rmSync(temporaryCrxPath, { force: true });
+}
+
+writeStagedManifest(crxManifest(sourceManifest, publicKey));
 await crx3([path.join(stagingDir, 'manifest.json')], {
   keyPath,
   crxPath,
-  zipPath,
 });
 
 const checksums = [zipPath, crxPath]
@@ -95,6 +129,7 @@ console.log(`zip=${zipPath}`);
 console.log(`crx=${crxPath}`);
 console.log(`sha256=${shaPath}`);
 console.log(`minified=${shouldMinify}`);
+console.log(`public_key_source=${configuredPublicKey ? 'configured' : 'derived'}`);
 if (shouldMinify) {
   console.log(`minified_js_files=${minifiedFiles}`);
   console.log(`js_bytes=${originalBytes}->${minifiedBytes}`);

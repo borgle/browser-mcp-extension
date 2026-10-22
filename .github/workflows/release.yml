@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CRX_PRIVATE_KEY_BASE64: ${{ secrets.CRX_PRIVATE_KEY_BASE64 }}
+      CRX_PUBLIC_KEY_BASE64: ${{ secrets.CRX_PUBLIC_KEY_BASE64 }}
 
     steps:
       - name: Checkout
@@ -42,11 +43,17 @@ jobs:
             exit 1
           fi
 
-      - name: Prepare signing key
-        if: ${{ env.CRX_PRIVATE_KEY_BASE64 == '' }}
+      - name: Validate signing secrets
+        shell: bash
         run: |
-          echo "Repository secret CRX_PRIVATE_KEY_BASE64 is required." >&2
-          exit 1
+          if [[ -z "${CRX_PRIVATE_KEY_BASE64}" ]]; then
+            echo "Repository secret CRX_PRIVATE_KEY_BASE64 is required." >&2
+            exit 1
+          fi
+          if [[ -z "${CRX_PUBLIC_KEY_BASE64}" ]]; then
+            echo "Repository secret CRX_PUBLIC_KEY_BASE64 is required." >&2
+            exit 1
+          fi
 
       - name: Package minified ZIP and signed CRX
         shell: bash

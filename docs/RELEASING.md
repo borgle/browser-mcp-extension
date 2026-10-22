@@ -2,16 +2,17 @@
 
 ## 密钥用途
 
-Manifest 中的 `key` 是公开的 RSA 公钥，用于固定开发版和自托管版的扩展 ID。
+`manifest.json` 中的 `key` 只用于本地加载未打包扩展时固定开发版 ID，不会进入
+Chrome Web Store 的 ZIP。
 
-`.keys/abm-extension-private.pem` 是对应的私钥，用于：
+发布流程使用两套独立内容：
 
-- 生成带签名的 `.crx`；
-- 保证自托管 CRX 使用同一个扩展 ID；
-- 在企业策略或开发模式下验证扩展来源。
+- Web Store ZIP：打包时删除 `manifest.json` 的 `key`，由商店签名并分配商店扩展 ID。
+- CRX：使用单独的 CRX 公钥/私钥对。打包时把 `CRX_PUBLIC_KEY_BASE64` 注入
+  `manifest.json` 的 `key`，并使用 `CRX_PRIVATE_KEY_BASE64` 签名。
 
-Chrome Web Store 上传的是 ZIP，商店会自行签名。不要把私钥上传到商店、GitHub
-仓库或普通 Release。
+两个 CRX Secret 必须来自同一对密钥。不要把私钥提交到仓库、上传商店或附加到普通
+Release。
 
 ## 配置 GitHub Secret
 
@@ -19,21 +20,30 @@ Chrome Web Store 上传的是 ZIP，商店会自行签名。不要把私钥上�
 
 ```text
 CRX_PRIVATE_KEY_BASE64
+CRX_PUBLIC_KEY_BASE64
 ```
 
-值为私钥文件的 Base64。请在本地生成并直接写入 GitHub Secret，不要粘贴到聊天、
-Issue 或提交记录：
+`CRX_PRIVATE_KEY_BASE64` 是 CRX 私钥 PEM 的 Base64；`CRX_PUBLIC_KEY_BASE64`
+是对应公钥的 manifest `key` 值（base64 SPKI DER），也可以直接填 PEM 公钥，
+打包脚本会归一化。
+
+建议为 CRX 单独生成一对新密钥，不要复用本地开发密钥：
+
+```bash
+node -e "const {generateKeyPairSync}=require('node:crypto');const fs=require('node:fs');const p=generateKeyPairSync('rsa',{modulusLength:4096});fs.writeFileSync('crx-private.pem',p.privateKey.export({type:'pkcs8',format:'pem'}));console.log(p.publicKey.export({type:'spki',format:'der'}).toString('base64'))"
+```
+
+把命令输出的公钥写入 `CRX_PUBLIC_KEY_BASE64`，私钥则转成 Base64 后写入
+`CRX_PRIVATE_KEY_BASE64`：
 
 ```powershell
 [Convert]::ToBase64String(
-  [IO.File]::ReadAllBytes(
-    "browser-mcp-extension\.keys\abm-extension-private.pem"
-  )
+  [IO.File]::ReadAllBytes("crx-private.pem")
 ) | Set-Clipboard
 ```
 
-请把原始 `.keys/abm-extension-private.pem` 备份到安全的密码管理器或离线介质。
-`.keys/` 已被 `.gitignore` 排除。
+请把原始私钥备份到安全的密码管理器或离线介质。`.keys/` 和 `*.pem` 已被
+`.gitignore` 排除。
 
 ## 自动发布
 
@@ -52,8 +62,8 @@ GitHub Actions 会：
 1. 安装依赖。
 2. 运行全部测试和语法检查。
 3. 校验标签与 manifest 版本一致。
-4. 生成默认压缩的 Web Store 用 ZIP。
-5. 使用 GitHub Secret 中的私钥生成签名 CRX。
+4. 删除 manifest `key`，生成默认压缩的 Web Store 用 ZIP。
+5. 注入 CRX 公钥，并使用 GitHub Secret 中的 CRX 私钥生成签名 CRX。
 6. 生成 SHA256 校验文件。
 7. 创建 GitHub Release 并上传这三个文件。
 
@@ -61,26 +71,35 @@ GitHub Actions 会：
 ES module 依赖或 Chrome API 名称。压缩只减小体积，不提供源码保密能力；
 GitHub 仓库中的可读源码仍是审查与维护依据。
 
-GitHub Release 与 Chrome Web Store 使用同一份默认压缩 ZIP；`.crx` 仅用于
-企业分发、受管环境和开发测试。
+GitHub Release 与 Chrome Web Store 使用同一份默认压缩 ZIP；该 ZIP 不包含
+`manifest.json` 的 `key`。`.crx` 使用另一套 CRX 密钥签名，仅用于企业分发、
+受管环境和开发测试。
 
 本地验证打包：
 
 ```bash
-CRX_KEY_PATH=.keys/abm-extension-private.pem npm run package:extension
+CRX_KEY_PATH=/path/to/crx-private.pem \
+CRX_PUBLIC_KEY_BASE64="<base64 SPKI 公钥>" \
+npm run package:extension
 ```
 
 Windows PowerShell：
 
 ```powershell
-$env:CRX_KEY_PATH = ".keys\abm-extension-private.pem"
+$env:CRX_KEY_PATH = "C:\path\to\crx-private.pem"
+$env:CRX_PUBLIC_KEY_BASE64 = "<base64 SPKI 公钥>"
 npm.cmd run package:extension
 ```
+
+不设置 `CRX_PUBLIC_KEY_BASE64` 时，脚本会从私钥推导公钥，便于本地调试；
+GitHub Actions 中必须显式配置，且必须与私钥匹配。
 
 生成未压缩调试包：
 
 ```bash
-CRX_KEY_PATH=.keys/abm-extension-private.pem npm run package:extension:source
+CRX_KEY_PATH=/path/to/crx-private.pem \
+CRX_PUBLIC_KEY_BASE64="<base64 SPKI 公钥>" \
+npm run package:extension:source
 ```
 
 ## 上传 Chrome Web Store
@@ -104,12 +123,14 @@ Chrome Web Store 不接受签名 CRX 作为上传包。上传 Release 中的 ZIP
 受到 Chrome 限制，并可能显示 `CRX_REQUIRED_PROOF_MISSING`。公开发行应通过
 Chrome Web Store。
 
-## 更换签名密钥
+## 更换 CRX 签名密钥
 
-更换私钥或 manifest `key` 会改变扩展 ID，并导致：
+更换 CRX 密钥会改变 CRX 扩展 ID，并可能导致：
 
-- 旧扩展的 storage 无法自动迁移；
-- 用户需要重新填写服务器地址和 API Key；
-- 服务端 `ABM_EXTENSION_ID` 需要同步更新；
-- Web Store 若已有项目，应优先使用该项目的扩展 ID，不应随意更换密钥。
+- 旧 CRX 安装的扩展 storage 无法自动迁移；
+- 用户需要重新填写服务地址和 API Key；
+- 如果服务端校验的是 CRX 扩展 ID，`ABM_EXTENSION_ID` 需要同步更新。
+
+Web Store 的项目 ID 由商店保持，不受 CRX 密钥影响。已有商店项目应优先使用商店
+分配的扩展 ID，不应为了统一 ID 而随意更换商店项目。
 
