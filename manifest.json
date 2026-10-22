@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "ABM 浏览器助手",
   "description": "通过 ABM（a browser mcp） 把用户浏览器安全接入 AI，提供导航、填表、数据提取、网络抓包和文件投递能力。",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "icons": { "16": "icons/icon-16.png", "32": "icons/icon-32.png", "48": "icons/icon-48.png", "128": "icons/icon-128.png" },
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyB6btVdgUF/bVHxByNpZMW/Ud2mQ0ICHQoVzvXCvzFFxS61nA06aNMLUdPUSQAxcblIF1Ixu7/7EZwRCXwJkPL83F1SPv8lrkMTLfWpCSt2UpEXvqDrZXQY7bIZOVp4BPXVIYooIHitJj3Xgva51h0By9zxL4efsgcvThtnpNIaR8/PN7fVAmt5gV8Uk7U41DtsqqZv3laKlQlvAeOkA2E4eDYu+fFGDc7u3B9bluTW7n9JW+agM1zkpxZ4LuXpEzwUI3sSpRj9GWy6bUp8/AwlwTISrv7EHlijLG36seUCfpoLiWhnUb/vSN2XL2tulEyXlm/TIgsckn7J8EqliSQIDAQAB",
   "permissions": [
