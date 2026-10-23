@@ -90,7 +90,7 @@ jobs:
             echo "## Changes"
             echo
             git log --no-merges --reverse \
-              --format="- [%h](https://github.com/${GITHUB_REPOSITORY}/commit/%H) %s — %an" \
+              --format="- [%h](https://github.com/${GITHUB_REPOSITORY}/commit/%H) %s (%an)" \
               "$range"
             echo
             echo "## Contributors"
