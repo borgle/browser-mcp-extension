@@ -80,17 +80,23 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          previous_tag="$(git describe --tags --abbrev=0 --match 'v*' "${GITHUB_REF_NAME}^" 2>/dev/null || true)"
-          if [[ -n "$previous_tag" ]]; then
-            gh api "repos/${GITHUB_REPOSITORY}/compare/${previous_tag}...${GITHUB_REF_NAME}" > "${RUNNER_TEMP}/abm-commits.json"
+          notes_file="${RUNNER_TEMP}/abm-release-notes.md"
+          manual_notes=".github/release-notes/${GITHUB_REF_NAME}.md"
+          if [[ -f "$manual_notes" ]]; then
+            cp "$manual_notes" "$notes_file"
           else
-            gh api "repos/${GITHUB_REPOSITORY}/commits?sha=${GITHUB_REF_NAME}&per_page=100" > "${RUNNER_TEMP}/abm-commits.json"
+            previous_tag="$(git describe --tags --abbrev=0 --match 'v*' "${GITHUB_REF_NAME}^" 2>/dev/null || true)"
+            if [[ -n "$previous_tag" ]]; then
+              gh api "repos/${GITHUB_REPOSITORY}/compare/${previous_tag}...${GITHUB_REF_NAME}" > "${RUNNER_TEMP}/abm-commits.json"
+            else
+              gh api "repos/${GITHUB_REPOSITORY}/commits?sha=${GITHUB_REF_NAME}&per_page=100" > "${RUNNER_TEMP}/abm-commits.json"
+            fi
+            args=(--input "${RUNNER_TEMP}/abm-commits.json" --repository "${GITHUB_REPOSITORY}" --tag "${GITHUB_REF_NAME}")
+            if [[ -n "$previous_tag" ]]; then
+              args+=(--previous-tag "$previous_tag")
+            fi
+            node scripts/release-notes.mjs "${args[@]}" > "$notes_file"
           fi
-          args=(--input "${RUNNER_TEMP}/abm-commits.json" --repository "${GITHUB_REPOSITORY}" --tag "${GITHUB_REF_NAME}")
-          if [[ -n "$previous_tag" ]]; then
-            args+=(--previous-tag "$previous_tag")
-          fi
-          node scripts/release-notes.mjs "${args[@]}" > "${RUNNER_TEMP}/abm-release-notes.md"
 
       - name: Create GitHub release
         env:

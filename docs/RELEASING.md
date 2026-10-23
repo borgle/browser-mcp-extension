@@ -68,6 +68,9 @@ GitHub Actions 会：
 7. 按 Conventional Commits 类型分组生成提交清单，列出提交者和 Full Changelog
    链接，并创建 GitHub Release 上传这三个文件。
 
+如果仓库中存在 `.github/release-notes/<tag>.md`，该文件会优先作为 Release
+notes 正文，适合人工撰写中英双语发布说明；没有时使用自动生成的提交清单。
+
 默认构建会使用 esbuild 对运行时代码做标准 JavaScript 压缩，不改变入口路径、
 ES module 依赖或 Chrome API 名称。压缩只减小体积，不提供源码保密能力；
 GitHub 仓库中的可读源码仍是审查与维护依据。
