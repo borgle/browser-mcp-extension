@@ -76,32 +76,21 @@ jobs:
             build/*.sha256
 
       - name: Generate release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          notes_file="${RUNNER_TEMP}/abm-release-notes.md"
           previous_tag="$(git describe --tags --abbrev=0 --match 'v*' "${GITHUB_REF_NAME}^" 2>/dev/null || true)"
           if [[ -n "$previous_tag" ]]; then
-            range="${previous_tag}..${GITHUB_REF_NAME}"
+            gh api "repos/${GITHUB_REPOSITORY}/compare/${previous_tag}...${GITHUB_REF_NAME}" > "${RUNNER_TEMP}/abm-commits.json"
           else
-            range="${GITHUB_REF_NAME}"
+            gh api "repos/${GITHUB_REPOSITORY}/commits?sha=${GITHUB_REF_NAME}&per_page=100" > "${RUNNER_TEMP}/abm-commits.json"
           fi
-
-          {
-            echo "## Changes"
-            echo
-            git log --no-merges --reverse \
-              --format="- [%h](https://github.com/${GITHUB_REPOSITORY}/commit/%H) %s (%an)" \
-              "$range"
-            echo
-            echo "## Contributors"
-            echo
-            git log --no-merges --reverse --format="%an" "$range" \
-              | awk 'NF && !seen[$0]++ { print "- " $0 }'
-            if [[ -n "$previous_tag" ]]; then
-              echo
-              echo "**Full Changelog**: https://github.com/${GITHUB_REPOSITORY}/compare/${previous_tag}...${GITHUB_REF_NAME}"
-            fi
-          } > "$notes_file"
+          args=(--input "${RUNNER_TEMP}/abm-commits.json" --repository "${GITHUB_REPOSITORY}" --tag "${GITHUB_REF_NAME}")
+          if [[ -n "$previous_tag" ]]; then
+            args+=(--previous-tag "$previous_tag")
+          fi
+          node scripts/release-notes.mjs "${args[@]}" > "${RUNNER_TEMP}/abm-release-notes.md"
 
       - name: Create GitHub release
         env:

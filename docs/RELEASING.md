@@ -65,8 +65,8 @@ GitHub Actions 会：
 4. 删除 manifest `key`，生成默认压缩的 Web Store 用 ZIP。
 5. 注入 CRX 公钥，并使用 GitHub Secret 中的 CRX 私钥生成签名 CRX。
 6. 生成 SHA256 校验文件。
-7. 按上一个版本标签生成提交清单和提交者列表，附上 Full Changelog 链接，并创建
-   GitHub Release 上传这三个文件。
+7. 按 Conventional Commits 类型分组生成提交清单，列出提交者和 Full Changelog
+   链接，并创建 GitHub Release 上传这三个文件。
 
 默认构建会使用 esbuild 对运行时代码做标准 JavaScript 压缩，不改变入口路径、
 ES module 依赖或 Chrome API 名称。压缩只减小体积，不提供源码保密能力；
