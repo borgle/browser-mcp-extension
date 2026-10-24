@@ -8,13 +8,12 @@
   </head>
   <body>
     <div class="app">
-      <!-- 固定在顶部：品牌 + 连接状态。切到任何视图都能一眼看到状态 -->
       <header class="app-header">
         <div class="brand">
-          <img class="brand-logo" src="../icons/icon-128.png" alt="" width="28" height="28" aria-hidden="true" />
+          <img class="brand-logo" src="../icons/icon-128.png" alt="" width="34" height="34" aria-hidden="true" />
           <div class="brand-text">
-            <h1>ABM 浏览器助手</h1>
-            <span class="version" id="version"></span>
+            <h1>ABM</h1>
+            <span class="brand-sub">BROWSER MCP <span class="version" id="version"></span></span>
           </div>
         </div>
         <span class="pill" id="status-pill" role="status" aria-live="polite">
@@ -23,19 +22,26 @@
         </span>
       </header>
 
-      <!-- 三个视图：概览（默认看这个）/ 设置 / 关于 -->
       <nav class="tabs" role="tablist" aria-label="视图切换">
         <button class="tab" id="tab-overview" role="tab" aria-selected="true" aria-controls="panel-overview" type="button">概览</button>
-        <button class="tab" id="tab-settings" role="tab" aria-selected="false" aria-controls="panel-settings" type="button">设置</button>
+        <button class="tab" id="tab-settings" role="tab" aria-selected="false" aria-controls="panel-settings" type="button">权限</button>
         <button class="tab" id="tab-about" role="tab" aria-selected="false" aria-controls="panel-about" type="button">关于</button>
       </nav>
 
-      <!-- ================= 概览：状态 + 主操作 + 通知 ================= -->
+      <!-- ================= 概览 -->
       <section class="panel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
-        <section class="card">
+        <section class="card deck">
+          <div class="deck-head">
+            <div>
+              <span class="card-kicker">LINK STATUS</span>
+              <h2>浏览器通道</h2>
+            </div>
+            <span class="deck-signal" aria-hidden="true"></span>
+          </div>
+
           <div class="setting-item" id="server-setting">
             <div class="row setting-view" id="server-view">
-              <span class="label">服务器</span>
+              <span class="label">服务端</span>
               <span class="value mono" id="status-server">—</span>
               <button class="icon-btn" id="edit-server" type="button" aria-expanded="false" aria-controls="server-edit">编辑</button>
             </div>
@@ -53,7 +59,7 @@
 
           <div class="setting-item" id="key-setting">
             <div class="row setting-view" id="key-view">
-              <span class="label">API Key</span>
+              <span class="label">访问密钥</span>
               <span class="value" id="status-key">—</span>
               <button class="icon-btn" id="edit-key" type="button" aria-expanded="false" aria-controls="key-edit">编辑</button>
             </div>
@@ -61,7 +67,7 @@
               <label class="field">
                 <span class="label">
                   API Key
-                  <a class="inline-link" id="link-get-key" href="https://abm.borgle.io" target="_blank" rel="noreferrer">管理 API Key</a>
+                  <a class="inline-link" id="link-get-key" href="https://abm.borgle.io" target="_blank" rel="noreferrer">管理密钥 ↗</a>
                 </span>
                 <span class="input-wrap">
                   <input id="api-key" type="password" placeholder="输入你的 API Key" spellcheck="false" autocomplete="off" />
@@ -72,16 +78,17 @@
                 <button id="save-key" class="btn primary" type="button">保存</button>
                 <button id="cancel-key" class="btn ghost" type="button">取消</button>
               </div>
-              <p class="hint">同一把 Key 用于扩展连接、MCP 客户端和视频桥。Key 只保存在当前浏览器。</p>
+              <p class="hint">Key 只保存在当前浏览器。扩展连接、视频桥与 MCP OAuth 授权都通过它识别你的浏览器。</p>
             </div>
           </div>
 
           <label class="switch">
             <input id="auto-reconnect" type="checkbox" />
-            <span>断线自动重连（扩展被浏览器回收后也会自动恢复）</span>
+            <span>断线自动重连</span>
+            <small>扩展被回收后自动恢复</small>
           </label>
 
-          <div class="row">
+          <div class="row meta-row">
             <span class="label">扩展 ID</span>
             <span class="value mono" id="status-ext-id">—</span>
             <button class="icon-btn" id="copy-ext-id" type="button">复制</button>
@@ -91,38 +98,50 @@
             <button id="btn-connect" class="btn primary block" type="button">连接</button>
             <button id="btn-disconnect" class="btn block" type="button">断开</button>
           </div>
+          <div class="deck-foot">
+            <span>LOCAL BRIDGE</span>
+            <span>WSS / ABM-1</span>
+          </div>
         </section>
 
-        <!-- 没配 Key 时的引导，配好自动隐藏 -->
-        <section class="card" id="onboarding" hidden>
+        <section class="card onboarding" id="onboarding" hidden>
+          <span class="card-kicker">QUICK START</span>
+          <h2>把浏览器接入 ABM</h2>
           <ol class="steps">
             <li>打开 <a id="link-home" href="https://abm.borgle.io" target="_blank" rel="noreferrer">ABM 管理台</a>，注册并创建 API Key</li>
-            <li>点击上方「API Key」右侧的「编辑」，粘贴 Key</li>
-            <li>如使用自建服务，先编辑「服务器」地址，再点「连接」</li>
+            <li>点击上方「访问密钥」右侧的「编辑」，粘贴 Key</li>
+            <li>如使用自建服务，先编辑「服务端」地址，再点「连接」</li>
           </ol>
           <div class="btn-row">
             <button id="btn-edit-key-from-onboarding" class="btn primary block" type="button">填写 API Key</button>
           </div>
         </section>
 
-        <section class="card">
+        <section class="card notices-card">
           <div class="card-head">
-            <h2>通知 <span class="badge" id="notice-badge" hidden></span></h2>
+            <div>
+              <span class="card-kicker">INBOX</span>
+              <h2>通知</h2>
+            </div>
+            <span class="badge" id="notice-badge" hidden></span>
           </div>
           <ul class="notices" id="notice-list"></ul>
         </section>
       </section>
 
-      <!-- ================= 设置：下载权限 ================= -->
+      <!-- ================= 设置 -->
       <section class="panel" id="panel-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
         <section class="card">
           <div class="card-head">
-            <h2>下载权限</h2>
+            <div>
+              <span class="card-kicker">PERMISSIONS</span>
+              <h2>下载权限</h2>
+            </div>
             <span class="count" id="perm-count"></span>
           </div>
           <p class="hint">
             扩展自己下载文件（视频 URL 通道、按 URL 取图）时需要域名授权。
-            本机后端（<code>127.0.0.1</code> / <code>localhost</code>）安装时已授予，标为「内置」且不可移除；
+            本机后端（<code>127.0.0.1</code> / <code>localhost</code>）安装时已授予，标为「内置」且不可移除。
             其他站点可自行添加，也可以随时移除。
           </p>
           <label class="switch">
@@ -137,10 +156,11 @@
         </section>
       </section>
 
-      <!-- ================= 关于：说明 / 链接 / 快捷入口 ================= -->
+      <!-- ================= 关于 -->
       <section class="panel" id="panel-about" role="tabpanel" aria-labelledby="tab-about" hidden>
-        <section class="card">
-          <div class="card-head"><h2>简介</h2></div>
+        <section class="card about-card">
+          <span class="card-kicker">ABOUT</span>
+          <h2>浏览器是新的接口</h2>
           <p class="about-desc">
             ABM 是 <strong>a browser mcp</strong> 的简称。扩展通过 MCP 协议把用户浏览器安全接入 AI，
             提供导航、点击、填表、数据提取、网络抓包和文件投递能力。
@@ -148,11 +168,16 @@
         </section>
 
         <section class="card">
-          <div class="card-head"><h2>文档与支持</h2></div>
+          <div class="card-head">
+            <div>
+              <span class="card-kicker">RESOURCES</span>
+              <h2>文档与支持</h2>
+            </div>
+          </div>
           <div class="link-list">
             <a class="link-row ext" id="link-docs" href="#" target="_blank" rel="noreferrer">
               <span class="link-title">使用说明</span>
-              <span class="link-meta">安装、连接、19 个工具清单与联调步骤</span>
+              <span class="link-meta">安装、连接、23 个工具清单与联调步骤</span>
             </a>
             <a class="link-row ext" id="link-repo" href="#" target="_blank" rel="noreferrer">
               <span class="link-title">GitHub 仓库</span>
@@ -166,7 +191,12 @@
         </section>
 
         <section class="card">
-          <div class="card-head"><h2>快捷入口</h2></div>
+          <div class="card-head">
+            <div>
+              <span class="card-kicker">SHORTCUTS</span>
+              <h2>快捷入口</h2>
+            </div>
+          </div>
           <div class="link-list">
             <button class="link-row" id="quick-bridge" type="button">
               <span class="link-title">打开视频桥页面</span>
@@ -176,7 +206,10 @@
         </section>
       </section>
 
-      <footer class="app-footer">ABM · a browser mcp · 19 个浏览器能力</footer>
+      <footer class="app-footer">
+        <span>ABM · a browser mcp</span>
+        <span>23 browser capabilities</span>
+      </footer>
     </div>
     <div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
     <script type="module" src="popup.js"></script>
