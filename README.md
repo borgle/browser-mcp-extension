@@ -19,7 +19,7 @@ ABM 是 **a browser mcp** 的简称。本仓库是 ABM 的 Chrome 扩展端，�
 - 网络与文件：拦截并检查网络请求，上传 base64、URL 或本地路径文件。
 - 视频投递：通过 bridge 或 URL 通道暂存视频并注入文件输入框。
 - 连接与通知：WebSocket 自动重连、Key 失效处理、通知角标和可信视频桥配置。
-- 中英文界面：popup 支持中文 / English 切换，语言保存在 `abm.lang`；扩展名称和描述随 Chrome 语言本地化。
+- 中英文界面：popup 默认跟随 Chrome UI 语言（其他语言回退英文），支持手动切换，选择保存在 `abm.lang`；扩展名称和描述随 Chrome 语言本地化。
 
 ## 快速开始
 

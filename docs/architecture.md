@@ -203,7 +203,7 @@ flowchart TB
 - popup 三个视图：概览（连接、Key、通知）、权限（下载域名）、关于（文档、视频桥）。
 - 配置保存在 `abm.connection`：`serverBaseUrl`、`apiKey`、`autoReconnect`。
 - 修改服务器或 Key 会断开旧连接；仅切换自动重连不会。
-- 语言支持 zh/en（`abm.lang`），连接状态、通知和权限界面同步切换。打开视频桥时 URL 会附带 `extensionId` 和当前语言 `lang`，桥页面沿用 popup 语言。
+- 语言支持 zh/en（`abm.lang`），默认跟随 Chrome UI 语言（其他语言回退 en）；连接状态、通知和权限界面同步切换。打开视频桥时 URL 会附带 `extensionId` 和当前语言 `lang`，桥页面沿用 popup 语言。
 
 ## 11. 安全
 

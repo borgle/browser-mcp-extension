@@ -369,7 +369,7 @@ CDP 生命周期 `cdp.js`：
 
 修改服务器或 Key 会断开旧连接；只切换 `autoReconnect` 不会。
 
-界面语言单独保存在 `abm.lang`（`zh` / `en`），首次打开按 Chrome UI 语言选择；popup 右上角的语言切换会立即重渲染状态、权限、通知和相对时间。扩展名称/描述由 `_locales/` 提供，随 Chrome 语言本地化。
+界面语言单独保存在 `abm.lang`（`zh` / `en`），首次打开按 Chrome UI 语言选择（其他语言回退 en）；popup 右上角的语言切换会立即重渲染状态、权限、通知和相对时间。扩展名称/描述由 `_locales/` 提供，随 Chrome 语言本地化。
 
 ## 11. 存储键与不变量
 
