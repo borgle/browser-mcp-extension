@@ -13,7 +13,7 @@
     "icon:build": "node tools/icon-build.mjs",
     "icon:build:mcp": "node tools/icon-build.mjs --theme=mcp",
     "icon:build:ink": "node tools/icon-build.mjs --theme=ink",
-    "icon:build:shipped": "node tools/icon-build.mjs --theme=mcp --variant=cursor",
+    "icon:build:shipped": "node tools/icon-build.mjs --theme=abm --variant=cursor",
     "icon:lab": "node tools/icon-lab.mjs"
   },
   "license": "MIT",

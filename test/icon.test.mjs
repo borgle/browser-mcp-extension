@@ -2,7 +2,7 @@
  * 图标自检（离线，不需要浏览器）：
  *   1. manifest 引用的 PNG 都存在，且尺寸/透明边/中心不透明都符合预期；
  *   2. maskable 版本必须是全出血（四角不透明），否则平台套遮罩时会露出透明角；
- *   3. 最小尺寸 16px 仍然要有「白窗 + 品牌色主图形」两种颜色，不能糊成一团；
+ *   3. 最小尺寸 16px 仍然要有「纸色描边 + 墨色窗口 + 酸绿主图形」三种颜色，不能糊成一团；
  *   4. 遮罩裁切后主图形仍在安全区内（圆形遮罩下不切到主图形）。
  *
  * 依赖 @napi-rs/canvas（devDependency，图标构建用的同一套 canvas）；
@@ -18,6 +18,7 @@ import { buildIconSvg } from '../tools/icon-artwork.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const icons = path.join(root, 'icons');
 const MANIFEST_SIZES = [16, 32, 48, 128];
+const VB = 256;
 
 let failures = 0;
 function check(name, condition, detail) {
@@ -58,13 +59,24 @@ async function pixelsOf(source, size) {
 }
 
 const isNear = (value, target, tolerance) => Math.abs(value - target) <= tolerance;
-const looksWhite = ([r, g, b, a]) => a > 200 && r > 235 && g > 235 && b > 235;
-const isBrandRed = ([r, g, b, a]) => a > 200 && r > 200 && g < 90 && b < 110;
-/** 更宽松的「红family」判断：给带高光/阴影的角落用，只要求色相偏品牌红 */
-const isRedFamily = ([r, g, b, a]) => a > 200 && r > 150 && r - g > 40 && r - b > 40;
+/** 纸色外框 */
+const looksPaper = ([r, g, b, a]) => a > 200 && r > 225 && g > 218 && b > 195;
+/** 纸色家族（含底部内阴影压暗的角落） */
+const isPaperFamily = ([r, g, b, a]) =>
+  a > 240 && r > 170 && g > 160 && b > 140 && r >= g && g >= b;
+/** ABM 酸绿主色 */
+const isBrandAcid = ([r, g, b, a]) => a > 200 && r > 170 && g > 210 && b < 140;
+/** 墨黑窗口 / 圆点 */
+const isInkFamily = ([r, g, b, a]) => a > 240 && r < 80 && g < 90 && b < 75;
 
 /* 1. manifest 里点名的位图 */
 const manifest = JSON.parse(await fs.readFile(path.join(root, 'manifest.json'), 'utf8'));
+const pkg = JSON.parse(await fs.readFile(path.join(root, 'package.json'), 'utf8'));
+check(
+  '发布图标使用 cursor 图形',
+  pkg.scripts?.['icon:build:shipped']?.includes('--variant=cursor'),
+  pkg.scripts?.['icon:build:shipped'],
+);
 for (const size of MANIFEST_SIZES) {
   const declared = manifest.icons?.[String(size)];
   check(`manifest 声明了 ${size}px 图标`, declared === `icons/icon-${size}.png`, `实际 ${declared}`);
@@ -90,26 +102,29 @@ for (const size of [64, 512]) {
   const info = await pixelsOf(svg, size);
   const corners = [info.at(0, 0), info.at(size - 1, 0), info.at(0, size - 1), info.at(size - 1, size - 1)];
   check(`maskable ${size}px 四角不透明`, corners.every(([, , , a]) => a > 240), corners.map((c) => c[3]).join(','));
-  check(`maskable ${size}px 四角是品牌底色`, corners.every(isRedFamily), corners.map((c) => c.join(',')).join(' | '));
+  check(`maskable ${size}px 四角是品牌底色`, corners.every(isPaperFamily), corners.map((c) => c.join(',')).join(' | '));
 }
 
-/* 3. 16px 可读性：窗口白 + 主图形品牌色，两种颜色都要在 */
+/* 3. 16px 可读性：纸色描边 + 墨色窗口 + 酸绿主图形 */
+const WINDOW_SCALE = 1.3;
+const canvasPoint = (size, x, y) => [
+  (VB / 2 + (x - VB / 2) * WINDOW_SCALE) / VB * size,
+  (VB / 2 + (y - VB / 2) * WINDOW_SCALE) / VB * size,
+];
 const small = await pixelsOf(buildIconSvg({ size: 16 }), 16);
-const smallPixels = [];
-for (let y = 0; y < 16; y += 1) {
-  for (let x = 0; x < 16; x += 1) smallPixels.push(small.at(x, y));
-}
-const at16 = (x, y) => small.at((x / 256) * 16, (y / 256) * 16);
-check('16px 有足够的白色窗口区', smallPixels.filter(looksWhite).length >= 20);
-check('16px 主图形中心是品牌色', isBrandRed(at16(128, 128)), at16(128, 128).join(','));
+const at16 = (x, y) => small.at(...canvasPoint(16, x, y));
+check('16px 窗口是墨色', isInkFamily(at16(170, 150)), at16(170, 150).join(','));
+check('16px 主图形中心是品牌色', isBrandAcid(at16(128, 128)), at16(128, 128).join(','));
 
-/* 4. 光学尺寸：小尺寸丢掉工具条，大尺寸保留工具条与浅色圆点 */
+/* 4. 光学尺寸：小尺寸丢掉工具条，大尺寸保留工具条与墨色圆点 */
 const big = await pixelsOf(buildIconSvg({ size: 128 }), 128);
-const dot = big.at((78 / 256) * 128, (87 / 256) * 128); // 圆点 1 号
-const bar = big.at((128 / 256) * 128, (87 / 256) * 128); // 圆点右侧的工具条本体
-check('128px 工具条是品牌色', isBrandRed(bar), bar.join(','));
-check('128px 圆点明显浅于工具条', dot[1] > 200 && bar[1] < 90, `${dot.join(',')} vs ${bar.join(',')}`);
-check('16px 同一位置已没有实心工具条', !isBrandRed(at16(128, 87)), at16(128, 87).join(','));
+const bigAt = (x, y) => big.at(...canvasPoint(128, x, y));
+const dot = bigAt(78, 87); // 圆点 1 号
+const bar = bigAt(128, 87); // 圆点右侧的工具条本体
+check('128px 窗口有纸色描边', isPaperFamily(bigAt(128, 58)), bigAt(128, 58).join(','));
+check('128px 工具条是品牌色', isBrandAcid(bar), bar.join(','));
+check('128px 圆点是墨色', isInkFamily(dot), dot.join(','));
+check('16px 同一位置已没有实心工具条', !isBrandAcid(at16(128, 87)), at16(128, 87).join(','));
 
 /* 5. 三个 SVG 源都在，且主图标是与 canvas 同源的参数化产物 */
 for (const name of ['icon.svg', 'icon-maskable.svg', 'logo-lockup.svg']) {
@@ -122,13 +137,18 @@ for (const name of ['icon.svg', 'icon-maskable.svg', 'logo-lockup.svg']) {
   }
 }
 check('icon.svg 保留了设计源注释', (await fs.readFile(path.join(icons, 'icon.svg'), 'utf8')).includes('icon-artwork.mjs'));
+check(
+  'icon.svg 使用 ABM 纸墨酸绿主题',
+  (await fs.readFile(path.join(icons, 'icon.svg'), 'utf8')).includes('#D8FF3E') &&
+    (await fs.readFile(path.join(icons, 'icon.svg'), 'utf8')).includes('#10110F'),
+);
 
 /* 6. 内边距：方形图标四周应留出透明边，避免贴边被系统裁掉 */
 const full = await pixelsOf(buildIconSvg({ size: 256 }), 256);
 check(
   '方形图标留有透明外边距',
-  isNear(full.at(128, 3)[3], 0, 10) && full.at(128, 12)[3] > 240,
-  `${full.at(128, 3)[3]} / ${full.at(128, 12)[3]}`,
+  isNear(full.at(128, 3)[3], 0, 10) && full.at(128, 50)[3] > 240,
+  `${full.at(128, 3)[3]} / ${full.at(128, 50)[3]}`,
 );
 
 console.log(failures === 0 ? '\n图标检查全部通过' : `\n图标检查失败 ${failures} 项`);

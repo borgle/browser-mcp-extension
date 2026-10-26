@@ -86,9 +86,8 @@ a:focus-visible { outline: 2px solid var(--acid); outline-offset: 3px; border-ra
   height: 36px;
   flex: 0 0 auto;
   display: block;
-  border-radius: 11px;
-  box-shadow: 0 0 0 1px rgba(216, 255, 62, .24), 0 8px 18px rgba(0, 0, 0, .28);
-  filter: hue-rotate(195deg) saturate(1.25) brightness(1.04);
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px rgba(243, 240, 232, .16), 0 8px 18px rgba(0, 0, 0, .28);
 }
 .brand-text { min-width: 0; }
 .brand-text h1 {

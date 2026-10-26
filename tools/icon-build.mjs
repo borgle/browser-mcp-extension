@@ -51,7 +51,7 @@ const argv = Object.fromEntries(
   }),
 );
 
-const theme = typeof argv.theme === 'string' && THEMES[argv.theme] ? argv.theme : 'xhs';
+const theme = typeof argv.theme === 'string' && THEMES[argv.theme] ? argv.theme : 'abm';
 const variant = typeof argv.variant === 'string' && VARIANTS[argv.variant] ? argv.variant : 'spark';
 
 /** SVG 源码 → canvas → PNG Buffer（按目标尺寸原生栅格化） */
@@ -89,9 +89,9 @@ async function buildSheet() {
   const W = 760;
   const H = 440;
   const bands = [
-    { top: 0, height: 200, bg: '#FFFFFF', label: '#9AA3AF' },
-    { top: 200, height: 130, bg: '#0B1220', label: '#64748B' },
-    { top: 330, height: 110, bg: '#F8FAFC', label: '#9AA3AF' },
+    { top: 0, height: 200, bg: '#F3F0E8', label: '#6C6F64' },
+    { top: 200, height: 130, bg: '#10110F', label: '#92978A' },
+    { top: 330, height: 110, bg: '#E9E4D8', label: '#6C6F64' },
   ];
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
@@ -159,7 +159,7 @@ async function buildSheet() {
     const image = await loadImage(buffer);
     ctx.drawImage(image, cursorX, third.top + 16, 64, 64);
     label(key, cursorX, third.top + 96, third.label);
-    cursorX += 104;
+    cursorX += 84;
   }
   // 三个图形候选
   cursorX = 380;

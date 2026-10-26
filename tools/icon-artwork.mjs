@@ -16,8 +16,20 @@ const VB = 256;
 
 /** 配色：art = 窗口主图形色，accent = 火花与工具条色，shadow = 窗口投影色 */
 export const THEMES = {
+  abm: {
+    label: 'ABM 纸墨酸绿（默认）',
+    from: '#FBFAF5',
+    to: '#E5DFD1',
+    art: '#10110F',
+    accent: '#D8FF3E',
+    shadow: '#10110F',
+    shadowAlpha: 0.28,
+    windowEdge: '#F3F0E8',
+    windowEdgeAlpha: 0.92,
+    windowEdgeWidth: 6,
+  },
   xhs: {
-    label: '小红书红（默认）',
+    label: '小红书红',
     from: '#FF4B63',
     to: '#E00D33',
     art: '#FFFFFF',
@@ -26,7 +38,7 @@ export const THEMES = {
     shadowAlpha: 0.3,
   },
   mcp: {
-    label: 'MCP 蓝（与 popup 主色一致）',
+    label: 'MCP 蓝',
     from: '#5A93FF',
     to: '#1D4ED8',
     art: '#FFFFFF',
@@ -35,7 +47,7 @@ export const THEMES = {
     shadowAlpha: 0.32,
   },
   ink: {
-    label: '墨黑（深色工具条）',
+    label: '墨黑',
     from: '#39404E',
     to: '#0F1319',
     art: '#F8FAFC',
@@ -159,9 +171,9 @@ const GLYPH = {
     small: { kind: 'spark', cx: 128, cy: 128, r: 46 },
   },
   cursor: {
-    full: { kind: 'cursor', x: 100, y: 116, w: 56, h: 56 },
-    medium: { kind: 'cursor', x: 102, y: 114, w: 52, h: 52 },
-    small: { kind: 'cursor', x: 98, y: 98, w: 60, h: 60 },
+    full: { kind: 'cursor', x: 92, y: 108, w: 72, h: 72 },
+    medium: { kind: 'cursor', x: 92, y: 106, w: 72, h: 72 },
+    small: { kind: 'cursor', x: 82, y: 78, w: 92, h: 92 },
   },
   bridge: {
     full: { kind: 'bridge', x: 82, y: 112, w: 92, h: 92 },
@@ -192,16 +204,13 @@ function bridgeMark(box) {
 
 /* ------------------------------------------------------------------ 组装 SVG */
 
-/** 背景层：渐变底 + 顶部高光 + 底部内阴影 */
-function backgroundLayers(theme, ids, maskable) {
-  const shape = maskable ? rr(0, 0, VB, VB, 0) : rr(8, 8, VB - 16, VB - 16, 56);
-  const x = maskable ? 0 : 8;
-  const w = maskable ? VB : VB - 16;
-  const r = maskable ? 0 : 56;
+/** maskable 全出血底：渐变底 + 顶部高光 + 底部内阴影 */
+function backgroundLayers(theme, ids) {
+  const shape = rr(0, 0, VB, VB, 0);
   return [
     `<path d="${shape}" fill="url(#${ids.bg})"/>`,
-    `<path d="${topRounded(x, x, w, 150, r)}" fill="url(#${ids.sheen})"/>`,
-    `<path d="${bottomRounded(x, 150, w, VB - 150 - x, r)}" fill="url(#${ids.inner})"/>`,
+    `<path d="${topRounded(0, 0, VB, 150, 0)}" fill="url(#${ids.sheen})"/>`,
+    `<path d="${bottomRounded(0, 150, VB, VB - 150, 0)}" fill="url(#${ids.inner})"/>`,
   ].join('\n    ');
 }
 
@@ -238,7 +247,12 @@ function glyphLayer(variant, detail, theme) {
 
 /** 浏览器窗口：工具条（含圆点）+ 主图形 */
 function windowLayer(variant, detail, theme) {
-  const parts = [`<path d="${rr(WIN.x, WIN.y, WIN.w, WIN.h, WIN.r)}" fill="${theme.art}"/>`];
+  const edge = theme.windowEdge
+    ? ` stroke="${theme.windowEdge}" stroke-opacity="${theme.windowEdgeAlpha ?? 1}" stroke-width="${theme.windowEdgeWidth ?? 2}"`
+    : '';
+  const parts = [
+    `<path d="${rr(WIN.x, WIN.y, WIN.w, WIN.h, WIN.r)}" fill="${theme.art}"${edge}/>`,
+  ];
   if (detail !== 'small') {
     parts.push(`<path d="${rr(BAR.x, BAR.y, BAR.w, BAR.h, BAR.r)}" fill="${theme.accent}"/>`);
     if (detail === 'full') {
@@ -260,14 +274,14 @@ function windowLayer(variant, detail, theme) {
  * 生成图标 SVG 源码
  * @param {object} [opts]
  * @param {number} [opts.size=256]        输出 width/height（决定栅格化精度，viewBox 不变）
- * @param {string} [opts.theme='xhs']     配色 key
+ * @param {string} [opts.theme='abm']     配色 key
  * @param {string} [opts.variant='spark'] 图形 key
  * @param {string} [opts.detail]          强制光学档位，默认按 size 推导
  * @param {boolean} [opts.maskable]       全出血版本（平台遮罩用）
  */
 export function buildIconSvg(opts = {}) {
-  const { size = 256, theme = 'xhs', variant = 'spark', maskable = false } = opts;
-  const t = THEMES[theme] ?? THEMES.xhs;
+  const { size = 256, theme = 'abm', variant = 'spark', maskable = false } = opts;
+  const t = THEMES[theme] ?? THEMES.abm;
   const v = VARIANTS[variant] ? variant : 'spark';
   const detail = opts.detail && GLYPH[v][opts.detail] ? opts.detail : detailFor(size);
   const suffix = `${theme}-${v}-${detail}${maskable ? '-m' : ''}`;
@@ -281,9 +295,10 @@ export function buildIconSvg(opts = {}) {
   const shadowBottom = WIN.y + WIN.h + 22;
 
   // maskable：主图形收到 76%，落在 80% 安全区内，四周留给平台遮罩
+  // 常规图标：去掉外层浅色底，让浏览器窗口自身撑满画布
   const markTransform = maskable
     ? ` transform="translate(${VB / 2} ${VB / 2}) scale(0.76) translate(${-VB / 2} ${-VB / 2})"`
-    : '';
+    : ` transform="translate(${VB / 2} ${VB / 2}) scale(1.3) translate(${-VB / 2} ${-VB / 2})"`;
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!-- 由 tools/icon-build.mjs 从 tools/icon-artwork.mjs 生成，请勿手改 -->
@@ -308,8 +323,7 @@ export function buildIconSvg(opts = {}) {
       <stop offset="1" stop-color="${t.shadow}" stop-opacity="0"/>
     </linearGradient>
   </defs>
-  ${backgroundLayers(t, ids, maskable)}
-  <g${markTransform}>
+${maskable ? `  ${backgroundLayers(t, ids)}\n` : ''}  <g${markTransform}>
     ${windowShadow(t, ids)}
     ${windowLayer(v, detail, t)}
   </g>
@@ -319,7 +333,7 @@ export function buildIconSvg(opts = {}) {
 
 /** 文档用横版组合：图标 + 中英文字标 */
 export function buildLockupSvg(opts = {}) {
-  const { theme = 'xhs', variant = 'spark', width = 760, height = 176 } = opts;
+  const { theme = 'abm', variant = 'spark', width = 760, height = 176 } = opts;
   const icon = buildIconSvg({ size: 256, theme, variant, detail: 'full' })
     .replace(/^<\?xml[^>]*\?>\n/, '')
     .replace(/^<!--[^>]*-->\n/, '')
@@ -332,8 +346,8 @@ export function buildLockupSvg(opts = {}) {
 <!-- 由 tools/icon-build.mjs 从 tools/icon-artwork.mjs 生成，请勿手改 -->
 <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none" xmlns="http://www.w3.org/2000/svg">
   ${icon}
-  <text x="172" y="78" font-family="${family}" font-size="44" font-weight="700" fill="#111827">浏览器 MCP 助手</text>
-  <text x="174" y="116" font-family="${family}" font-size="19" fill="#6B7280">a browser mcp · 把浏览器交给 AI</text>
+  <text x="172" y="78" font-family="${family}" font-size="44" font-weight="700" fill="#10110F">浏览器 MCP 助手</text>
+  <text x="174" y="116" font-family="${family}" font-size="19" fill="#6C6F64">a browser mcp · 把浏览器交给 AI</text>
 </svg>
 `;
 }
