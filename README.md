@@ -3,6 +3,11 @@
 ABM 是 **a browser mcp** 的简称。本仓库是 ABM 的 Chrome 扩展端，开源。它把用户自己的浏览器连接到 ABM 托管服务，让 MCP 客户端执行页面自动化、数据提取、网络检查和文件/视频投递。
 
 - 官方服务：https://abm.borgle.io
+- 文档索引：[docs/README.md](docs/README.md)
+- 架构设计：[docs/architecture.md](docs/architecture.md)
+- 详细设计：[docs/detailed-design.md](docs/detailed-design.md)
+- 数据流：[docs/data-flow.md](docs/data-flow.md)
+- 使用场景：[docs/scenarios.md](docs/scenarios.md)
 - 隐私政策：[docs/PRIVACY.md](docs/PRIVACY.md)
 - 发布与签名：[docs/RELEASING.md](docs/RELEASING.md)
 
@@ -97,7 +102,7 @@ src/             扩展后台、工具和连接逻辑
 inject-scripts/  ISOLATED/MAIN world 注入桥与执行器
 popup/           扩展设置和状态界面
 test/            自动化测试
-docs/            隐私政策和发布说明
+docs/            架构、详细设计、数据流、场景、隐私和发布文档
 ```
 
 ## 安全与隐私

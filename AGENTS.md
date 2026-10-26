@@ -7,8 +7,10 @@ ABM 是 **a browser mcp** 的简称。
 修改代码前先阅读：
 
 1. 配套 `browser-mcp-server` 仓库中的 `docs/architecture.md`。
-2. 配套仓库中的 `docs/development-plan.md`。
-3. 当前模块的 README、manifest 与测试。
+2. 本仓库的 `docs/architecture.md`、`docs/detailed-design.md`。
+3. `docs/data-flow.md` 与 `docs/scenarios.md` 中受影响链路。
+4. 配套仓库中的 `docs/development-plan.md`。
+5. 当前模块的 README、manifest 与测试。
 
 两个仓库完全独立，只通过文档化的 HTTP、WebSocket 和扩展外部消息契约通信。
 
@@ -50,11 +52,14 @@ ABM 是 **a browser mcp** 的简称。
 - `core/storage.js`：统一访问 `abm.*` 设置和运行状态。
 - `core/lifecycle.js`：service worker 初始化和恢复。
 - `tools/registry.js`：工具注册与分发。
-- `tools/*.js`：浏览器、DOM、上传、CDP 和页面数据操作。
-- `video/`：视频接收器和桥消息。
+- `tools/*.js`：浏览器、DOM、上传、CDP 和页面数据操作（19 个扩展工具）。
+- `tabs.js` / `reuse.js`：标签等待、自动分组和复用范围。
+- `cdp.js` / `injectable.js`：CDP 生命周期和 MAIN/ISOLATED 注入。
+- `video/receiver.js` / `video/store.js`：视频桥外部消息和内存暂存。
 - `permissions/`：Chrome 域名权限管理。
 - `notices/`：通知持久化与角标状态。
 - `popup/`：概览、设置、通知、账号入口和关于。
+- `inject-scripts/`：页面注入桥和 MAIN world 执行器。
 
 不要在 service worker 入口堆积无关职责。
 
@@ -104,6 +109,7 @@ WebSocket 关闭码只使用标准协议值，业务语义来自 `ABM_*`、`retr
 
 - 全部公开工具使用 `browser_*` 命名。
 - 工具名称和参数与服务端架构契约一致。
+- 扩展注册 19 个浏览器工具；`browser_open_session`、`browser_close_session`、`browser_stage_video`、`browser_send_notice` 由服务端执行。
 - 工具结果必须可序列化并限制体积。
 - 长任务遵守超时和取消规则。
 - 需要域名访问的操作必须先检查浏览器权限。
