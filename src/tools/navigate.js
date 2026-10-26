@@ -39,7 +39,7 @@ export class NavigateTool extends BaseTool {
       automationGroupCollapsed,
       background = false,
     } = args;
-    if (!url) return this.createErrorResult('URL 参数必填');
+    if (!url) return this.createErrorResult('URL is required');
 
     const plan = resolveReusePlan({ url, reuse, reuseKey });
     if (plan.error) return invalidArgs(plan.error);
@@ -60,7 +60,7 @@ export class NavigateTool extends BaseTool {
       const tab = reusableTab?.id
         ? await chrome.tabs.update(reusableTab.id, { url, active })
         : await chrome.tabs.create({ url, active });
-      if (!tab?.id) return this.createErrorResult(reused ? '复用标签页失败' : '创建标签页失败');
+      if (!tab?.id) return this.createErrorResult(reused ? 'Failed to reuse tab' : 'Failed to create tab');
 
       const tabId = tab.id;
       // 归组失败不影响导航本身（例如用户把分组功能关掉了）
@@ -84,7 +84,7 @@ export class NavigateTool extends BaseTool {
       }
 
       const finalTab = await getTabWithGrace(tabId);
-      if (!finalTab) return this.createErrorResult(reused ? '复用标签页失败' : '创建标签页失败');
+      if (!finalTab) return this.createErrorResult(reused ? 'Failed to reuse tab' : 'Failed to create tab');
       return this.createTextResult(
         JSON.stringify({
           success: true,
@@ -96,7 +96,7 @@ export class NavigateTool extends BaseTool {
         }),
       );
     } catch (err) {
-      return this.createErrorResult(err instanceof Error ? err.message : '导航失败');
+      return this.createErrorResult(err instanceof Error ? err.message : 'Navigation failed');
     }
   }
 
@@ -158,7 +158,7 @@ export class NavigateTool extends BaseTool {
       }
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
-    throw new Error(`等待 readyState=${expected} 超时`);
+    throw new Error(`Timed out waiting for readyState=${expected}`);
   }
 
   /** 等到连续 idleMs 内没有网络请求完成 */
@@ -174,7 +174,7 @@ export class NavigateTool extends BaseTool {
         if (Date.now() - lastActivityAt >= idleMs) return;
         await new Promise((resolve) => setTimeout(resolve, 200));
       }
-      throw new Error('等待网络空闲超时');
+      throw new Error('Timed out waiting for network idle');
     } finally {
       chrome.webRequest.onCompleted.removeListener(onCompleted);
     }

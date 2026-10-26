@@ -11,7 +11,7 @@ export class BrowserControlTool extends BaseTool {
   name = 'browser_control';
 
   async execute({ action, params }) {
-    if (!action || !params) return this.createErrorResult('action 和 params 参数必填');
+    if (!action || !params) return this.createErrorResult('action and params are required');
     try {
       switch (action) {
         case 'close_tab':
@@ -25,10 +25,10 @@ export class BrowserControlTool extends BaseTool {
         case 'activate_tab':
           return await this.activateTab(params);
         default:
-          return this.createErrorResult(`未知操作: ${action}`);
+          return this.createErrorResult(`Unknown action: ${action}`);
       }
     } catch (err) {
-      return this.createErrorResult(err instanceof Error ? err.message : '操作失败');
+      return this.createErrorResult(err instanceof Error ? err.message : 'Operation failed');
     }
   }
 
@@ -38,7 +38,7 @@ export class BrowserControlTool extends BaseTool {
   }
 
   async closeTab(params) {
-    if (!params.tabId) return this.createErrorResult('tabId 参数必填');
+    if (!params.tabId) return this.createErrorResult('tabId is required');
     await chrome.tabs.remove(params.tabId);
     return this.createTextResult(
       JSON.stringify({ success: true, action: 'close_tab', tabId: params.tabId }),
@@ -46,7 +46,7 @@ export class BrowserControlTool extends BaseTool {
   }
 
   async getTab(params) {
-    if (!params.tabId) return this.createErrorResult('tabId 参数必填');
+    if (!params.tabId) return this.createErrorResult('tabId is required');
     const tab = await chrome.tabs.get(params.tabId);
     return this.createTextResult(
       JSON.stringify({ success: true, action: 'get_tab', tab: BrowserControlTool.summarize(tab) }),
@@ -54,16 +54,16 @@ export class BrowserControlTool extends BaseTool {
   }
 
   async updateTab(params) {
-    if (!params.tabId) return this.createErrorResult('tabId 参数必填');
+    if (!params.tabId) return this.createErrorResult('tabId is required');
     const tab = await chrome.tabs.update(params.tabId, params.updateInfo || {});
-    if (!tab) return this.createErrorResult(`标签页 ${params.tabId} 不存在`);
+    if (!tab) return this.createErrorResult(`Tab ${params.tabId} does not exist`);
     return this.createTextResult(
       JSON.stringify({ success: true, action: 'update_tab', tab: BrowserControlTool.summarize(tab) }),
     );
   }
 
   async activateTab(params) {
-    if (!params.tabId) return this.createErrorResult('tabId 参数必填');
+    if (!params.tabId) return this.createErrorResult('tabId is required');
     const tab = await chrome.tabs.get(params.tabId);
     // 窗口最小化时用户看不到激活效果，先还原窗口
     if (tab.windowId !== undefined) {
@@ -74,7 +74,7 @@ export class BrowserControlTool extends BaseTool {
       await chrome.windows.update(tab.windowId, { focused: true }).catch(() => {});
     }
     const activated = await chrome.tabs.update(params.tabId, { active: true });
-    if (!activated) return this.createErrorResult(`标签页 ${params.tabId} 不存在`);
+    if (!activated) return this.createErrorResult(`Tab ${params.tabId} does not exist`);
     return this.createTextResult(
       JSON.stringify({
         success: true,

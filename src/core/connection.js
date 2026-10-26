@@ -461,7 +461,7 @@ class WebSocketClient {
           status: 'error',
           error: {
             code: 'ABM_TOOL_EXECUTION_FAILED',
-            message: firstError?.text || '工具执行失败',
+            message: firstError?.text || 'Tool execution failed',
           },
         };
       } else {

@@ -21,7 +21,7 @@ export class ExtractDataTool extends BaseTool {
     const { selector, path, attribute = 'text', source = 'element', all = false, timeout = 5000 } = args;
     try {
       const tab = await this.getTargetTab(args.tabId);
-      if (!tab?.id) return this.createErrorResult('无法找到目标标签页');
+      if (!tab?.id) return this.createErrorResult('Could not find the target tab');
 
       let data;
       switch (source) {
@@ -32,7 +32,7 @@ export class ExtractDataTool extends BaseTool {
           data = await this.extractDocumentData(tab.id, path || '');
           break;
         default:
-          if (!selector) return this.createErrorResult('element 源需要提供 selector 参数');
+          if (!selector) return this.createErrorResult('selector is required when source is element');
           data = await this.extractElementData(tab.id, selector, attribute, all, timeout);
       }
 
@@ -47,7 +47,7 @@ export class ExtractDataTool extends BaseTool {
         }),
       );
     } catch (err) {
-      return this.createErrorResult(err instanceof Error ? err.message : '提取数据失败');
+      return this.createErrorResult(err instanceof Error ? err.message : 'Failed to extract data');
     }
   }
 
@@ -117,7 +117,7 @@ export class ExtractDataTool extends BaseTool {
 
   async extractElementData(tabId, selector, attribute, all, timeoutMs) {
     if (!(await this.waitForElement(tabId, selector, timeoutMs))) {
-      throw new Error(`元素未找到: ${selector}`);
+      throw new Error(`Element not found: ${selector}`);
     }
     return this.executeInTab(
       tabId,

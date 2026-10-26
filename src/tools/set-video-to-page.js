@@ -33,7 +33,7 @@ export class SetVideoToPageTool extends BaseTool {
 
   async execute(args) {
     const { selector, timeout = 30000, clearAfterSet = false } = args;
-    if (!selector) return this.createErrorResult('selector 参数必填');
+    if (!selector) return this.createErrorResult('selector is required');
 
     try {
       const video = getStoredVideo();
@@ -42,7 +42,7 @@ export class SetVideoToPageTool extends BaseTool {
           JSON.stringify({
             success: false,
             needUpload: true,
-            message: '没有暂存的视频，请先上传视频文件',
+            message: 'No staged video. Upload a video first.',
           }),
         );
       }
@@ -50,11 +50,11 @@ export class SetVideoToPageTool extends BaseTool {
       let tabId = args.tabId;
       if (!tabId) {
         const activeTab = await this.getTargetTab();
-        if (!activeTab?.id) return this.createErrorResult('无法找到目标标签页');
+        if (!activeTab?.id) return this.createErrorResult('Could not find the target tab');
         tabId = activeTab.id;
       }
       if (!(await this.waitForSelector(tabId, selector, timeout))) {
-        return this.createErrorResult(`文件输入框未找到: ${selector}`);
+        return this.createErrorResult(`File input not found: ${selector}`);
       }
 
       await chrome.scripting.executeScript({
@@ -83,7 +83,7 @@ export class SetVideoToPageTool extends BaseTool {
           videoFileType: video.fileType,
         },
         INIT_TIMEOUT_MS,
-        '初始化视频接收器超时',
+        'Timed out initializing the video receiver',
         null,
       );
 
@@ -123,8 +123,8 @@ export class SetVideoToPageTool extends BaseTool {
             chunkData: chunkBase64,
           },
           MESSAGE_TIMEOUT_MS,
-          `发送分块 ${index + 1} 超时`,
-          '分块接收失败',
+          `Timed out sending chunk ${index + 1}`,
+          'Failed to receive chunk',
         );
       }
 
@@ -138,11 +138,11 @@ export class SetVideoToPageTool extends BaseTool {
           args: { selector },
         },
         MESSAGE_TIMEOUT_MS,
-        '设置视频到 file input 超时',
-        '设置视频失败',
+        'Timed out setting the video on the file input',
+        'Failed to set video',
       );
       if (!setResult.success) {
-        throw new Error(setResult.error?.message || '设置视频到 file input 失败');
+        throw new Error(setResult.error?.message || 'Failed to set the video on the file input');
       }
 
       if (clearAfterSet) clearStoredVideo();
@@ -157,7 +157,7 @@ export class SetVideoToPageTool extends BaseTool {
         }),
       );
     } catch (err) {
-      return this.createErrorResult(err instanceof Error ? err.message : '视频设置失败');
+      return this.createErrorResult(err instanceof Error ? err.message : 'Failed to set video');
     }
   }
 

@@ -11,12 +11,12 @@ export class WaitElementsTool extends BaseTool {
 
   async execute(args) {
     const { selector, count, timeout = 60000, checkInterval = 500 } = args;
-    if (!selector) return this.createErrorResult('selector 参数必填');
-    if (count === undefined || count < 0) return this.createErrorResult('count 参数必填且必须为非负数');
+    if (!selector) return this.createErrorResult('selector is required');
+    if (count === undefined || count < 0) return this.createErrorResult('count is required and must be a non-negative integer');
 
     try {
       const tab = await this.getTargetTab(args.tabId);
-      if (!tab?.id) return this.createErrorResult('无法找到目标标签页');
+      if (!tab?.id) return this.createErrorResult('Could not find the target tab');
       const tabId = tab.id;
       const startedAt = Date.now();
 
@@ -44,9 +44,9 @@ export class WaitElementsTool extends BaseTool {
         await new Promise((resolve) => setTimeout(resolve, checkInterval));
       }
 
-      return this.createErrorResult(`等待元素超时: 期望 ${count} 个 "${selector}"，超时时间 ${timeout}ms`);
+      return this.createErrorResult(`Timed out waiting for elements: expected ${count} of "${selector}" within ${timeout}ms`);
     } catch (err) {
-      return this.createErrorResult(err instanceof Error ? err.message : '等待元素失败');
+      return this.createErrorResult(err instanceof Error ? err.message : 'Failed to wait for elements');
     }
   }
 }

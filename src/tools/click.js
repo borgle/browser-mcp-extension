@@ -16,21 +16,21 @@ export class ClickTool extends BaseTool {
 
   async execute(args) {
     const { selector, text, timeout = 30000, waitClickable = true } = args;
-    if (!selector) return this.createErrorResult('selector 参数必填');
+    if (!selector) return this.createErrorResult('selector is required');
     try {
       const tab = await this.getTargetTab(args.tabId);
-      if (!tab?.id) return this.createErrorResult('无法找到目标标签页');
+      if (!tab?.id) return this.createErrorResult('Could not find the target tab');
       const tabId = tab.id;
 
       if (!(await this.waitForSelector(tabId, selector, timeout))) {
-        return this.createErrorResult(`元素未找到: ${selector}`);
+        return this.createErrorResult(`Element not found: ${selector}`);
       }
 
       await this.executeInTab(
         tabId,
         (sel, matchText, checkVisible) => {
           const nodes = Array.from(document.querySelectorAll(sel));
-          if (nodes.length === 0) throw new Error(`元素未找到: ${sel}`);
+          if (nodes.length === 0) throw new Error(`Element not found: ${sel}`);
 
           let target = null;
           if (matchText) {
@@ -39,7 +39,7 @@ export class ClickTool extends BaseTool {
                 const content = node.textContent?.trim() || '';
                 return content === matchText || content.includes(matchText);
               }) || null;
-            if (!target) throw new Error(`未找到包含文本 "${matchText}" 的元素`);
+            if (!target) throw new Error(`No element found containing text "${matchText}"`);
           } else {
             target = nodes[0];
           }
@@ -47,7 +47,7 @@ export class ClickTool extends BaseTool {
           if (checkVisible) {
             const style = window.getComputedStyle(target);
             if (style.display === 'none' || style.visibility === 'hidden') {
-              throw new Error('元素不可见');
+              throw new Error('Element is not visible');
             }
           }
 
@@ -69,7 +69,7 @@ export class ClickTool extends BaseTool {
         JSON.stringify({ success: true, selector, text: text || undefined }),
       );
     } catch (err) {
-      return this.createErrorResult(err instanceof Error ? err.message : '点击失败');
+      return this.createErrorResult(err instanceof Error ? err.message : 'Click failed');
     }
   }
 

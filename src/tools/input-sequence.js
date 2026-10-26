@@ -81,32 +81,32 @@ function toCdpCommand(event) {
     return { method: 'Input.dispatchKeyEvent', params };
   }
 
-  throw new Error(`不支持的输入事件类型: ${event.type}`);
+  throw new Error(`Unsupported input event type: ${event.type}`);
 }
 
 /** 入参校验（提前失败，别中途炸） */
 function validateEvents(events) {
-  if (!Array.isArray(events) || events.length === 0) throw new Error('events 必须是非空数组');
-  if (events.length > MAX_EVENTS) throw new Error(`事件数 ${events.length} 超过上限 ${MAX_EVENTS}`);
+  if (!Array.isArray(events) || events.length === 0) throw new Error('events must be a non-empty array');
+  if (events.length > MAX_EVENTS) throw new Error(`Event count ${events.length} exceeds the limit of ${MAX_EVENTS}`);
 
   let totalDelay = 0;
   events.forEach((event, index) => {
-    if (!event || typeof event.type !== 'string') throw new Error(`第 ${index} 个事件缺少 type`);
+    if (!event || typeof event.type !== 'string') throw new Error(`Event ${index} is missing type`);
     if (!MOUSE_EVENT_TYPES.has(event.type) && !KEY_EVENT_TYPES.has(event.type) && event.type !== 'insertText') {
-      throw new Error(`第 ${index} 个事件类型不支持: ${event.type}`);
+      throw new Error(`Unsupported event type at index ${index}: ${event.type}`);
     }
     if (event.after !== undefined) {
       if (!Number.isFinite(event.after) || event.after < 0) {
-        throw new Error(`第 ${index} 个事件的 after 非法: ${event.after}`);
+        throw new Error(`Invalid after value at event ${index}: ${event.after}`);
       }
       totalDelay += event.after;
     }
     if (MOUSE_EVENT_TYPES.has(event.type) && (!Number.isFinite(event.x) || !Number.isFinite(event.y))) {
-      throw new Error(`第 ${index} 个鼠标事件缺少有效的 x/y`);
+      throw new Error(`Mouse event ${index} is missing valid x/y`);
     }
   });
   if (totalDelay > MAX_TOTAL_DELAY_MS) {
-    throw new Error(`累计等待 ${totalDelay}ms 超过上限 ${MAX_TOTAL_DELAY_MS}ms`);
+    throw new Error(`Cumulative wait ${totalDelay}ms exceeds the limit of ${MAX_TOTAL_DELAY_MS}ms`);
   }
 }
 
@@ -117,18 +117,18 @@ export class InputSequenceTool extends BaseTool {
     try {
       validateEvents(args?.events);
     } catch (err) {
-      return this.createErrorResult(err instanceof Error ? err.message : '事件时间表非法');
+      return this.createErrorResult(err instanceof Error ? err.message : 'Invalid event timeline');
     }
 
     try {
       const tab = await this.getTargetTab(args.tabId);
-      if (!tab?.id) return this.createErrorResult('无法找到目标标签页');
+      if (!tab?.id) return this.createErrorResult('Could not find the target tab');
       const tabId = tab.id;
 
       const cooldownMs = inputStallRemainingMs(tabId);
       if (cooldownMs > 0) {
         return this.createErrorResult(
-          `标签页 ${tabId} 的输入事件刚刚未得到浏览器回应，${Math.ceil(cooldownMs / 1000)} 秒内不再下发`,
+          `The browser did not acknowledge recent input events on tab ${tabId}. Wait ${Math.ceil(cooldownMs / 1000)} seconds before sending more.`,
         );
       }
 
@@ -146,7 +146,7 @@ export class InputSequenceTool extends BaseTool {
             // CDP 命令超时说明会话可能已经麻了：记冷却，别继续砸输入
             if (err instanceof TimeoutError) markInputStall(tabId);
             const reason = err instanceof Error ? err.message : String(err);
-            throw new Error(`第 ${index + 1}/${args.events.length} 个事件 ${event.type} 失败: ${reason}`);
+            throw new Error(`Event ${index + 1}/${args.events.length} (${event.type}) failed: ${reason}`);
           }
           dispatched += 1;
           if (event.type === 'mousePressed') {
@@ -164,7 +164,7 @@ export class InputSequenceTool extends BaseTool {
       clearInputStall(tabId);
       return this.createTextResult(JSON.stringify({ success: true, tabId, dispatched }));
     } catch (err) {
-      return this.createErrorResult(err instanceof Error ? err.message : '输入事件回放失败');
+      return this.createErrorResult(err instanceof Error ? err.message : 'Input event replay failed');
     }
   }
 }

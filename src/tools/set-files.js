@@ -15,28 +15,28 @@ export class SetFilesTool extends BaseTool {
 
   async execute(args) {
     const { selector, files, timeout = 30000 } = args;
-    if (!selector) return this.createErrorResult('selector 参数必填');
-    if (!files || files.length === 0) return this.createErrorResult('files 参数必填且不能为空');
+    if (!selector) return this.createErrorResult('selector is required');
+    if (!files || files.length === 0) return this.createErrorResult('files is required and must not be empty');
 
     try {
       let tabId = args.tabId;
       if (!tabId) {
         const activeTab = await this.getTargetTab();
-        if (!activeTab?.id) return this.createErrorResult('无法找到目标标签页');
+        if (!activeTab?.id) return this.createErrorResult('Could not find the target tab');
         tabId = activeTab.id;
       }
 
       if (!(await this.waitForSelector(tabId, selector, timeout))) {
-        return this.createErrorResult(`文件输入框未找到: ${selector}`);
+        return this.createErrorResult(`File input not found: ${selector}`);
       }
 
       await this.executeInTab(
         tabId,
         (sel, fileList) => {
           const input = document.querySelector(sel);
-          if (!input) throw new Error(`文件输入框未找到: ${sel}`);
+          if (!input) throw new Error(`File input not found: ${sel}`);
           if (!(input instanceof HTMLInputElement) || input.type !== 'file') {
-            throw new Error('选择器指向的不是文件输入框');
+            throw new Error('Selector does not point to a file input');
           }
 
           const transfer = new DataTransfer();
@@ -61,7 +61,7 @@ export class SetFilesTool extends BaseTool {
         JSON.stringify({ success: true, selector, fileCount: files.length }),
       );
     } catch (err) {
-      return this.createErrorResult(err instanceof Error ? err.message : '文件设置失败');
+      return this.createErrorResult(err instanceof Error ? err.message : 'Failed to set files');
     }
   }
 }

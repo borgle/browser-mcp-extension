@@ -148,17 +148,17 @@
             const fileType = window.__browserMcpVideoFileType;
 
             if (!videoData) {
-              result = { success: false, error: { message: '视频数据未接收完成' } };
+              result = { success: false, error: { message: 'Video data was not fully received' } };
               break;
             }
 
             const inputElement = document.querySelector(selector);
             if (!inputElement) {
-              result = { success: false, error: { message: `文件输入框未找到: ${selector}` } };
+              result = { success: false, error: { message: `File input not found: ${selector}` } };
               break;
             }
             if (!(inputElement instanceof HTMLInputElement) || inputElement.type !== 'file') {
-              result = { success: false, error: { message: '选择器指向的不是文件输入框' } };
+              result = { success: false, error: { message: 'Selector does not point to a file input' } };
               break;
             }
 
@@ -211,7 +211,7 @@
             const { selector } = args;
             const fileInput = document.querySelector(selector);
             if (!fileInput) {
-              result = { success: false, error: { message: `文件输入框未找到: ${selector}` } };
+              result = { success: false, error: { message: `File input not found: ${selector}` } };
               break;
             }
 

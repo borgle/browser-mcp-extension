@@ -54,7 +54,7 @@ export function resolveReusePlan({ url, reuse = true, reuseKey } = {}) {
     return {
       mode: null,
       patterns: [],
-      error: `reuse 只接受 true、false、site 或 origin，收到 ${String(value)}`,
+      error: `reuse accepts true, false, site, or origin; received ${String(value)}`,
     };
   }
   if (value === false) return { mode: null, patterns: [] };

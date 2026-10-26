@@ -167,7 +167,7 @@ flowchart TB
 {"content":[{"type":"text","text":"..."}],"isError":false}
 ```
 
-错误结果使用 `type: "error"`，由网关包装为 `ABM_TOOL_EXECUTION_FAILED`，或服务端映射为更具体的错误。
+错误结果使用 `type: "error"`，由网关包装为 `ABM_TOOL_EXECUTION_FAILED`，或服务端映射为更具体的错误。工具描述由服务端提供并统一为英文；扩展返回的工具错误和结果消息也使用英文规范文案，页面内 toast 再按 `abm.lang` 本地化。
 
 ## 7. 标签与页面
 

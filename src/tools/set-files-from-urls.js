@@ -26,8 +26,8 @@ export class SetFilesFromUrlsTool extends BaseTool {
 
   async execute(args) {
     const { selector, urls, tabId, timeout } = args;
-    if (!selector) return this.createErrorResult('selector 参数必填');
-    if (!urls || urls.length === 0) return this.createErrorResult('urls 参数必填且不能为空');
+    if (!selector) return this.createErrorResult('selector is required');
+    if (!urls || urls.length === 0) return this.createErrorResult('urls is required and must not be empty');
 
     const files = [];
     for (const item of urls) {
@@ -35,10 +35,10 @@ export class SetFilesFromUrlsTool extends BaseTool {
       try {
         parsed = new URL(item.url);
       } catch {
-        return this.createErrorResult(`无效的 URL 格式: ${item.url}`);
+        return this.createErrorResult(`Invalid URL format: ${item.url}`);
       }
       if (!['http:', 'https:'].includes(parsed.protocol)) {
-        return this.createErrorResult('仅支持 http/https 协议');
+        return this.createErrorResult('Only http and https URLs are supported');
       }
       if (!(await hasHostPermission(item.url))) {
         return this.createTextResult(
@@ -46,14 +46,14 @@ export class SetFilesFromUrlsTool extends BaseTool {
             success: false,
             needPermission: true,
             host: parsed.host,
-            message: `没有访问 ${parsed.host} 的权限，请在扩展设置中添加该域名或授权所有域名`,
+            message: `No permission to access ${parsed.host}. Add this host or grant all hosts in the extension settings.`,
           }),
         );
       }
 
       const downloaded = await this.fetchAsBase64(item.url);
       if ('error' in downloaded) {
-        return this.createErrorResult(`下载图片失败 (${item.url}): ${downloaded.error}`);
+        return this.createErrorResult(`Failed to download file (${item.url}): ${downloaded.error}`);
       }
       files.push({
         base64Data: downloaded.base64,
@@ -76,10 +76,10 @@ export class SetFilesFromUrlsTool extends BaseTool {
 
       const declaredLength = res.headers.get('Content-Length');
       if (declaredLength && parseInt(declaredLength, 10) > MAX_FILE_BYTES) {
-        return { error: '图片超过 10MB 限制' };
+        return { error: 'File exceeds the 10MB limit' };
       }
       const buffer = await res.arrayBuffer();
-      if (buffer.byteLength > MAX_FILE_BYTES) return { error: '图片超过 10MB 限制' };
+      if (buffer.byteLength > MAX_FILE_BYTES) return { error: 'File exceeds the 10MB limit' };
 
       const bytes = new Uint8Array(buffer);
       let binary = '';
@@ -91,8 +91,8 @@ export class SetFilesFromUrlsTool extends BaseTool {
       const mimeType = contentType.startsWith('image/') ? contentType.split(';')[0] : '';
       return { base64: btoa(binary), mimeType };
     } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') return { error: '下载超时' };
-      return { error: err instanceof Error ? err.message : '网络错误' };
+      if (err instanceof Error && err.name === 'AbortError') return { error: 'Download timed out' };
+      return { error: err instanceof Error ? err.message : 'network error' };
     } finally {
       clearTimeout(timer);
     }

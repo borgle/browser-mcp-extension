@@ -83,7 +83,7 @@ export class NetworkInterceptTool extends BaseTool {
 
   async execute(args) {
     const { cmd } = args;
-    if (!cmd) return this.createErrorResult('cmd 参数必填 (start/stop/list/detail)');
+    if (!cmd) return this.createErrorResult('cmd is required (start/stop/list/detail)');
     try {
       switch (cmd) {
         case 'start':
@@ -95,10 +95,10 @@ export class NetworkInterceptTool extends BaseTool {
         case 'detail':
           return await this.detail(args);
         default:
-          return this.createErrorResult(`未知的 cmd: ${cmd}`);
+          return this.createErrorResult(`Unknown cmd: ${cmd}`);
       }
     } catch (err) {
-      return this.createErrorResult(err instanceof Error ? err.message : '网络拦截操作失败');
+      return this.createErrorResult(err instanceof Error ? err.message : 'Network interception operation failed');
     }
   }
 
@@ -110,7 +110,7 @@ export class NetworkInterceptTool extends BaseTool {
     await sendCommand(tabId, 'Network.enable');
     await sendCommand(tabId, 'Network.setCacheDisabled', { cacheDisabled: true });
     installNetworkInterceptListeners();
-    return this.ok({ success: true, tabId, message: '网络拦截已启动' });
+    return this.ok({ success: true, tabId, message: 'Network interception started' });
   }
 
   async stop(args) {
@@ -126,7 +126,7 @@ export class NetworkInterceptTool extends BaseTool {
       await detachDebugger(tabId);
     }
     capturedRequests.delete(tabId);
-    return this.ok({ success: true, tabId, message: '网络拦截已停止' });
+    return this.ok({ success: true, tabId, message: 'Network interception stopped' });
   }
 
   async list(args) {
@@ -148,10 +148,10 @@ export class NetworkInterceptTool extends BaseTool {
 
   async detail(args) {
     const { requestId, compress } = args;
-    if (!requestId) return this.createErrorResult('requestId 参数必填');
+    if (!requestId) return this.createErrorResult('requestId is required');
     const tabId = await this.resolveTabId(args.tabId, false);
     const record = requestsOf(tabId).get(requestId);
-    if (!record) return this.createErrorResult(`请求 ${requestId} 未找到`);
+    if (!record) return this.createErrorResult(`Request ${requestId} not found`);
 
     const response = await sendCommand(tabId, 'Network.getResponseBody', { requestId });
     let body = response.body;
@@ -204,9 +204,9 @@ export class NetworkInterceptTool extends BaseTool {
     if (tabId) return tabId;
     const intercepting = interceptingTabs.values().next().value;
     if (intercepting !== undefined) return intercepting;
-    if (!allowActive) throw new Error('没有正在拦截的标签页，请先调用 start 或指定 tabId');
+    if (!allowActive) throw new Error('No tab is being intercepted. Call start first or pass tabId.');
     const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-    if (!activeTab?.id) throw new Error('无法找到目标标签页');
+    if (!activeTab?.id) throw new Error('Could not find the target tab');
     return activeTab.id;
   }
 

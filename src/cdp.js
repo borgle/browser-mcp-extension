@@ -116,7 +116,7 @@ export async function ensureDebugger(tabId) {
     await withTimeout(
       chrome.debugger.sendCommand({ tabId }, 'Runtime.evaluate', { expression: '1' }),
       PROBE_TIMEOUT_MS,
-      '会话探测未回应',
+      'Session probe did not respond',
     );
   } catch {
     // 会话已失效（例如页面崩溃/重启）：重建
@@ -140,13 +140,13 @@ export function isDebuggerAttached(tabId) {
  * @param {object} [params]
  */
 export async function sendCommand(tabId, method, params) {
-  if (!attachedTabs.has(tabId)) throw new Error(`Tab ${tabId} 未附加调试器，请先调用 start`);
+  if (!attachedTabs.has(tabId)) throw new Error(`Tab ${tabId} is not attached to the debugger. Call start first.`);
   incrementInFlight(tabId);
   try {
     return await withTimeout(
       chrome.debugger.sendCommand({ tabId }, method, params),
       COMMAND_TIMEOUT_MS,
-      `CDP 命令 ${method} 超过 ${COMMAND_TIMEOUT_MS}ms 未回应`,
+      `CDP command ${method} did not respond within ${COMMAND_TIMEOUT_MS}ms`,
     );
   } finally {
     decrementInFlight(tabId);

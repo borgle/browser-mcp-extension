@@ -23,25 +23,25 @@ export class UploadFileTool extends BaseTool {
       mimeType = 'application/octet-stream',
       timeout = 30000,
     } = args;
-    if (!selector) return this.createErrorResult('selector 参数必填');
-    if (!base64Data) return this.createErrorResult('base64Data 参数必填');
+    if (!selector) return this.createErrorResult('selector is required');
+    if (!base64Data) return this.createErrorResult('base64Data is required');
 
     try {
       const tab = await this.getTargetTab(args.tabId);
-      if (!tab?.id) return this.createErrorResult('无法找到目标标签页');
+      if (!tab?.id) return this.createErrorResult('Could not find the target tab');
       const tabId = tab.id;
 
       if (!(await this.waitForSelector(tabId, selector, timeout))) {
-        return this.createErrorResult(`文件输入框未找到: ${selector}`);
+        return this.createErrorResult(`File input not found: ${selector}`);
       }
 
       await this.executeInTab(
         tabId,
         (sel, data, name, type) => {
           const input = document.querySelector(sel);
-          if (!input) throw new Error(`文件输入框未找到: ${sel}`);
+          if (!input) throw new Error(`File input not found: ${sel}`);
           if (!(input instanceof HTMLInputElement) || input.type !== 'file') {
-            throw new Error('选择器指向的不是文件输入框');
+            throw new Error('Selector does not point to a file input');
           }
 
           const binary = atob(data.replace(/^data:[^;]+;base64,/, ''));
@@ -65,7 +65,7 @@ export class UploadFileTool extends BaseTool {
         JSON.stringify({ success: true, selector, fileName, mimeType }),
       );
     } catch (err) {
-      return this.createErrorResult(err instanceof Error ? err.message : '文件上传失败');
+      return this.createErrorResult(err instanceof Error ? err.message : 'File upload failed');
     }
   }
 }

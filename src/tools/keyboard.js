@@ -18,16 +18,16 @@ export class KeyboardTool extends BaseTool {
 
   async execute(args) {
     const { keys, selector, delay = 0, timeout = 30000 } = args;
-    if (!keys) return this.createErrorResult('keys 参数必填');
+    if (!keys) return this.createErrorResult('keys is required');
 
     try {
       const tab = await this.getTargetTab(args.tabId);
-      if (!tab?.id) return this.createErrorResult('无法找到目标标签页');
+      if (!tab?.id) return this.createErrorResult('Could not find the target tab');
       const tabId = tab.id;
 
       if (selector) {
         if (!(await this.waitForSelector(tabId, selector, timeout))) {
-          return this.createErrorResult(`元素未找到: ${selector}`);
+          return this.createErrorResult(`Element not found: ${selector}`);
         }
         await this.executeInTab(
           tabId,
@@ -67,7 +67,7 @@ export class KeyboardTool extends BaseTool {
           for (const rawKey of list) {
             const key = KEY_ALIASES[rawKey] || rawKey;
             const target = document.activeElement;
-            if (!target) throw new Error('没有聚焦的元素');
+            if (!target) throw new Error('No focused element');
 
             const down = new KeyboardEvent('keydown', { key, code: key, bubbles: true, cancelable: true });
             const press = new KeyboardEvent('keypress', { key, code: key, bubbles: true, cancelable: true });
@@ -126,7 +126,7 @@ export class KeyboardTool extends BaseTool {
         JSON.stringify({ success: true, keysCount: keyList.length, selector: selector || 'activeElement' }),
       );
     } catch (err) {
-      return this.createErrorResult(err instanceof Error ? err.message : '键盘输入失败');
+      return this.createErrorResult(err instanceof Error ? err.message : 'Keyboard input failed');
     }
   }
 }

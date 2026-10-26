@@ -23,12 +23,12 @@ export class SetFilesNativeTool extends BaseTool {
 
   async execute(args) {
     const { selector, paths, timeout = 30000 } = args ?? {};
-    if (!selector) return this.createErrorResult('selector 参数必填');
-    if (!Array.isArray(paths) || paths.length === 0) return this.createErrorResult('paths 必须是非空数组');
+    if (!selector) return this.createErrorResult('selector is required');
+    if (!Array.isArray(paths) || paths.length === 0) return this.createErrorResult('paths must be a non-empty array');
 
     try {
       const tab = await this.getTargetTab(args.tabId);
-      if (!tab?.id) return this.createErrorResult('无法找到目标标签页');
+      if (!tab?.id) return this.createErrorResult('Could not find the target tab');
       const tabId = tab.id;
 
       await ensureDebugger(tabId);
@@ -38,7 +38,7 @@ export class SetFilesNativeTool extends BaseTool {
 
       return this.createTextResult(JSON.stringify({ success: true, tabId, count: paths.length }));
     } catch (err) {
-      return this.createErrorResult(err instanceof Error ? err.message : '设置文件失败');
+      return this.createErrorResult(err instanceof Error ? err.message : 'Failed to set files');
     }
   }
 
@@ -51,6 +51,6 @@ export class SetFilesNativeTool extends BaseTool {
       if (nodeId) return nodeId;
       await sleep(POLL_INTERVAL_MS);
     }
-    throw new Error(`未找到文件输入框: ${selector}`);
+    throw new Error(`File input not found: ${selector}`);
   }
 }

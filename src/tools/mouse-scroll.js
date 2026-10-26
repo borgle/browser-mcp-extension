@@ -19,13 +19,13 @@ export class MouseScrollTool extends BaseTool {
   async execute(args) {
     const { deltaX = 0, deltaY, steps = 1 } = args;
     if (!Number.isFinite(deltaY)) {
-      return this.createErrorResult('deltaY 参数必填，向下滚动为正数，向上滚动为负数');
+      return this.createErrorResult('deltaY is required; positive scrolls down and negative scrolls up');
     }
-    if (!Number.isFinite(deltaX)) return this.createErrorResult('deltaX 必须是数字');
+    if (!Number.isFinite(deltaX)) return this.createErrorResult('deltaX must be a number');
 
     try {
       const tab = await this.getTargetTab(args.tabId);
-      if (!tab?.id) return this.createErrorResult('无法找到目标标签页');
+      if (!tab?.id) return this.createErrorResult('Could not find the target tab');
       const tabId = tab.id;
 
       const viewport = await this.executeInTab(tabId, () => ({
@@ -66,7 +66,7 @@ export class MouseScrollTool extends BaseTool {
         JSON.stringify({ success: true, tabId, x, y, deltaX, deltaY, steps: stepCount }),
       );
     } catch (err) {
-      return this.createErrorResult(err instanceof Error ? err.message : '鼠标滚动失败');
+      return this.createErrorResult(err instanceof Error ? err.message : 'Mouse scroll failed');
     }
   }
 }

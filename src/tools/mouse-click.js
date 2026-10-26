@@ -35,15 +35,15 @@ export class MouseClickTool extends BaseTool {
   async execute(args) {
     const { x, y, button = 'left', clickCount = 1 } = args;
     if (!Number.isFinite(x) || !Number.isFinite(y)) {
-      return this.createErrorResult('x/y 参数必填，且必须是视口坐标数字');
+      return this.createErrorResult('x and y are required and must be numeric viewport coordinates');
     }
     if (!['left', 'right', 'middle'].includes(button)) {
-      return this.createErrorResult('button 仅支持 left/right/middle');
+      return this.createErrorResult('button must be left, right, or middle');
     }
 
     try {
       const tab = await this.getTargetTab(args.tabId);
-      if (!tab?.id) return this.createErrorResult('无法找到目标标签页');
+      if (!tab?.id) return this.createErrorResult('Could not find the target tab');
       const tabId = tab.id;
       const pressDuration = args.pressDurationMs ?? randomInt(50, 160);
 
@@ -74,7 +74,7 @@ export class MouseClickTool extends BaseTool {
         JSON.stringify({ success: true, tabId, x, y, button, clickCount }),
       );
     } catch (err) {
-      return this.createErrorResult(err instanceof Error ? err.message : '鼠标点击失败');
+      return this.createErrorResult(err instanceof Error ? err.message : 'Mouse click failed');
     }
   }
 }

@@ -32,7 +32,7 @@ const checks = [
   ['video chunk action', executor.includes(INJECT_ACTION.VIDEO_CHUNK)],
   ['set video action', executor.includes(INJECT_ACTION.SET_VIDEO_TO_INPUT)],
   ['inject tool keeps MAIN executor', injectTool.includes('executeInMainWorld')],
-  ['inject tool rejects ISOLATED source', injectTool.includes('只支持 MAIN world')],
+  ['inject tool rejects ISOLATED source', injectTool.includes('only supports the MAIN world')],
   ['inject tool has no ISOLATED source method', !injectTool.includes('executeInIsolatedWorld')],
   ['inject tool has CSP fallback', injectTool.includes('executeInMainWorldViaCdp')],
   ['inject tool uses CDP Runtime.evaluate', injectTool.includes("'Runtime.evaluate'")],

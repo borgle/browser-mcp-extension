@@ -114,6 +114,7 @@ WebSocket 关闭码只使用标准协议值，业务语义来自 `ABM_*`、`retr
 - 工具名称和参数与服务端架构契约一致。
 - 扩展注册 19 个浏览器工具；`browser_open_session`、`browser_close_session`、`browser_stage_video`、`browser_send_notice` 由服务端执行。
 - 工具结果必须可序列化并限制体积。
+- 工具描述和工具错误使用英文规范文案；面向用户的 popup 与页面提示按 `abm.lang` 本地化。
 - 长任务遵守超时和取消规则。
 - 需要域名访问的操作必须先检查浏览器权限。
 - 视频工具统一使用暂存接收器，不维护独立缓存。

@@ -42,16 +42,16 @@ export class DownloadVideoFromUrlTool extends BaseTool {
 
   async execute(args) {
     const { url, timeout = DEFAULT_TIMEOUT_MS } = args;
-    if (!url) return this.createErrorResult('url 参数必填');
+    if (!url) return this.createErrorResult('url is required');
 
     let parsed;
     try {
       parsed = new URL(url);
     } catch {
-      return this.createErrorResult('无效的 URL 格式');
+      return this.createErrorResult('Invalid URL format');
     }
     if (!['http:', 'https:'].includes(parsed.protocol)) {
-      return this.createErrorResult('仅支持 http/https 协议');
+      return this.createErrorResult('Only http and https URLs are supported');
     }
     if (!(await hasHostPermission(url))) {
       return this.createTextResult(
@@ -59,7 +59,7 @@ export class DownloadVideoFromUrlTool extends BaseTool {
           success: false,
           needPermission: true,
           host: parsed.host,
-          message: `没有访问 ${parsed.host} 的权限，请在扩展设置中添加该域名或授权所有域名`,
+          message: `No permission to access ${parsed.host}. Add this host or grant all hosts in the extension settings.`,
         }),
       );
     }
@@ -77,20 +77,20 @@ export class DownloadVideoFromUrlTool extends BaseTool {
       } catch (err) {
         clearTimeout(timer);
         if (err instanceof Error && err.name === 'AbortError') {
-          return this.createErrorResult(`下载超时（超过 ${Math.round(timeout / 1000 / 60)} 分钟）`);
+          return this.createErrorResult(`Download timed out after ${Math.round(timeout / 1000 / 60)} minutes`);
         }
-        return this.createErrorResult(`下载失败: ${err instanceof Error ? err.message : '网络错误'}`);
+        return this.createErrorResult(`Download failed: ${err instanceof Error ? err.message : 'network error'}`);
       }
       clearTimeout(timer);
 
-      if (!response.ok) return this.createErrorResult(`下载失败: HTTP ${response.status} ${response.statusText}`);
+      if (!response.ok) return this.createErrorResult(`Download failed: HTTP ${response.status} ${response.statusText}`);
 
       // 类型校验：优先 Content-Type，其次看 URL 后缀
       const contentType = response.headers.get('Content-Type') || '';
       if (!contentType.startsWith('video/') && !ALLOWED_CONTENT_TYPES.includes(contentType)) {
         const extension = parsed.pathname.split('.').pop()?.toLowerCase();
         if (!extension || !ALLOWED_EXTENSIONS.includes(extension)) {
-          return this.createErrorResult(`不支持的文件类型: ${contentType || '未知'}`);
+          return this.createErrorResult(`Unsupported file type: ${contentType || 'unknown'}`);
         }
       }
 
@@ -99,7 +99,7 @@ export class DownloadVideoFromUrlTool extends BaseTool {
         const declared = parseInt(contentLength, 10);
         if (declared > VIDEO_MAX_BYTES) {
           return this.createErrorResult(
-            `文件过大: ${Math.round(declared / 1024 / 1024 / 1024)}GB，最大支持 20GB`,
+            `File too large: ${Math.round(declared / 1024 / 1024 / 1024)}GB. The maximum is 20GB.`,
           );
         }
       }
@@ -117,7 +117,7 @@ export class DownloadVideoFromUrlTool extends BaseTool {
 
       if (bytes.length > VIDEO_MAX_BYTES) {
         return this.createErrorResult(
-          `文件过大: ${Math.round(bytes.length / 1024 / 1024 / 1024)}GB，最大支持 20GB`,
+          `File too large: ${Math.round(bytes.length / 1024 / 1024 / 1024)}GB. The maximum is 20GB.`,
         );
       }
 
@@ -131,11 +131,11 @@ export class DownloadVideoFromUrlTool extends BaseTool {
           fileName,
           fileType,
           fileSize: bytes.length,
-          message: '视频下载并暂存成功',
+          message: 'Video downloaded and staged',
         }),
       );
     } catch (err) {
-      return this.createErrorResult(err instanceof Error ? err.message : '下载失败');
+      return this.createErrorResult(err instanceof Error ? err.message : 'Download failed');
     }
   }
 

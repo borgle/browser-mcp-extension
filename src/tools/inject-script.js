@@ -79,7 +79,7 @@ export class InjectScriptTool extends BaseTool {
       if (!code) return invalidArgs('Code is required');
       if (world && world !== EXECUTION_WORLD.MAIN) {
         return invalidArgs(
-          'browser_inject_script 只支持 MAIN world；MV3 隔离世界不能执行任意源码字符串',
+          'browser_inject_script only supports the MAIN world; MV3 isolated worlds cannot execute arbitrary source strings',
         );
       }
 

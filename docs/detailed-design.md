@@ -408,6 +408,7 @@ CDP 生命周期 `cdp.js`：
 ## 13. 错误与结果模型
 
 - 工具内部错误 → `content:[{type:"error",text}]` + `isError:true`。
+- 工具描述和工具错误消息使用英文规范文案；popup 与页面 toast 按 `abm.lang` 本地化。
 - 注册表兜底异常 → `ABM_TOOL_EXECUTION_FAILED`。
 - 连接层错误 → `error` 消息 + `ABM_*` 业务码 + 标准关闭码。
 - 可重试错误 → 指数退避；终止错误 → 停止重连。

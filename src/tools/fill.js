@@ -18,8 +18,8 @@ export class FillTool extends BaseTool {
 
   async execute(args) {
     const { selector, value, method = 'set', clearBefore = false, timeout = 30000, tabId } = args;
-    if (!selector) return this.createErrorResult('selector 参数必填');
-    if (value == null) return this.createErrorResult('value 参数必填');
+    if (!selector) return this.createErrorResult('selector is required');
+    if (value == null) return this.createErrorResult('value is required');
 
     try {
       let targetTabId;
@@ -27,19 +27,19 @@ export class FillTool extends BaseTool {
         targetTabId = tabId;
       } else {
         const activeTab = await this.getTargetTab();
-        if (!activeTab?.id) return this.createErrorResult('无法找到目标标签页');
+        if (!activeTab?.id) return this.createErrorResult('Could not find the target tab');
         targetTabId = activeTab.id;
       }
 
       if (!(await this.waitForSelector(targetTabId, selector, timeout))) {
-        return this.createErrorResult(`元素未找到: ${selector}`);
+        return this.createErrorResult(`Element not found: ${selector}`);
       }
 
       await this.executeInTab(
         targetTabId,
         (sel, text, fillMethod, shouldClear) => {
           const element = document.querySelector(sel);
-          if (!element) throw new Error(`元素未找到: ${sel}`);
+          if (!element) throw new Error(`Element not found: ${sel}`);
           if (element instanceof HTMLElement) element.focus();
 
           if (shouldClear) {
@@ -60,7 +60,7 @@ export class FillTool extends BaseTool {
                 element.textContent = text;
                 element.dispatchEvent(new Event('input', { bubbles: true }));
               } else {
-                throw new Error('元素不支持 set 方法');
+                throw new Error('Element does not support the set method');
               }
               break;
 
@@ -79,13 +79,13 @@ export class FillTool extends BaseTool {
                 element.textContent = original + text;
                 element.dispatchEvent(new Event('input', { bubbles: true }));
               } else {
-                throw new Error('元素不支持 type 方法');
+                throw new Error('Element does not support the type method');
               }
               break;
 
             case 'execCommand':
               if (!(element instanceof HTMLElement && element.isContentEditable)) {
-                throw new Error('元素不支持 execCommand 方法（需要 contenteditable）');
+                throw new Error('Element does not support execCommand (requires contenteditable)');
               }
               element.focus();
               if (shouldClear) document.execCommand('selectAll', false);
@@ -93,7 +93,7 @@ export class FillTool extends BaseTool {
               break;
 
             default:
-              throw new Error(`不支持的填充方法: ${fillMethod}`);
+              throw new Error(`Unsupported fill method: ${fillMethod}`);
           }
           return { success: true };
         },
@@ -104,7 +104,7 @@ export class FillTool extends BaseTool {
         JSON.stringify({ success: true, selector, method, valueLength: value.length }),
       );
     } catch (err) {
-      return this.createErrorResult(err instanceof Error ? err.message : '填充失败');
+      return this.createErrorResult(err instanceof Error ? err.message : 'Fill failed');
     }
   }
 
