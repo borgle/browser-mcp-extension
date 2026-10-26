@@ -1,0 +1,10 @@
+{
+  "extensionName": {
+    "message": "ABM Browser Assistant",
+    "description": "Browser action name"
+  },
+  "extensionDescription": {
+    "message": "Connect your browser to AI agents through ABM (a browser mcp): navigation, forms, data extraction, network inspection, and file delivery.",
+    "description": "Extension description"
+  }
+}

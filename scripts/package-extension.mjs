@@ -50,7 +50,7 @@ const shouldMinify = !process.argv.includes('--no-minify');
 rmSync(stagingDir, { recursive: true, force: true });
 mkdirSync(stagingDir, { recursive: true });
 
-for (const entry of ['manifest.json', 'src', 'popup', 'inject-scripts', 'icons']) {
+for (const entry of ['manifest.json', 'src', 'popup', 'inject-scripts', 'icons', '_locales']) {
   cpSync(path.join(root, entry), path.join(stagingDir, entry), {
     recursive: true,
   });

@@ -53,6 +53,9 @@ Manifest 关键项：
 | `externally_connectable` | 仅本机与 `borgle.io` 可信桥来源 |
 | `web_accessible_resources` | `/inject-scripts/*` |
 | `background` | `src/background.js`，ES module |
+| `_locales` | 扩展名称/描述的中英文资源，`default_locale=en` |
+
+popup 默认按 Chrome UI 语言选择界面语言，也可以手动切换；选择保存在 `abm.lang`。
 
 ## 4. 组件
 

@@ -369,11 +369,14 @@ CDP 生命周期 `cdp.js`：
 
 修改服务器或 Key 会断开旧连接；只切换 `autoReconnect` 不会。
 
+界面语言单独保存在 `abm.lang`（`zh` / `en`），首次打开按 Chrome UI 语言选择；popup 右上角的语言切换会立即重渲染状态、权限、通知和相对时间。扩展名称/描述由 `_locales/` 提供，随 Chrome 语言本地化。
+
 ## 11. 存储键与不变量
 
 | 键 | 内容 | 生命周期 |
 |---|---|---|
 | `abm.connection` | 服务器、Key、自动重连 | 持久 |
+| `abm.lang` | popup 语言 `zh` / `en` | 持久 |
 | `abm.rejectedApiKey` | 被拒绝的 Key | 用户更换 Key 时清除 |
 | `abm.shouldReconnect` | 是否应重连 | `storage.session` |
 | `abm.currentBaseUrl` | 上次连接地址 | `storage.session` |
@@ -430,6 +433,7 @@ CDP 生命周期 `cdp.js`：
 | `test/host-input.test.mjs` | 域名输入解析 |
 | `test/storage.test.mjs` | 配置存取、默认值 |
 | `test/popup-layout.test.mjs` | popup 视图与 DOM 契约 |
+| `test/popup-i18n.test.mjs` | popup 中英文词典、manifest 本地化和预览依赖 |
 | `test/manifest-key.test.mjs` | 扩展 ID/Key 一致性 |
 | `test/icon.test.mjs` | 图标产物 |
 | `test/release-*` | 发布流程 |

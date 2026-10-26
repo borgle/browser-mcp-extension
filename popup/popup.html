@@ -16,16 +16,20 @@
             <span class="brand-sub">BROWSER MCP <span class="version" id="version"></span></span>
           </div>
         </div>
+        <div class="lang-switch" id="lang-switch" role="group" aria-label="Language / 语言">
+          <button type="button" data-lang="zh" aria-pressed="true">中文</button>
+          <button type="button" data-lang="en" aria-pressed="false">EN</button>
+        </div>
         <span class="pill" id="status-pill" role="status" aria-live="polite">
           <span class="dot" id="status-dot"></span>
-          <span id="status-text">检测中</span>
+          <span id="status-text" data-i18n="status.checking">检测中</span>
         </span>
       </header>
 
-      <nav class="tabs" role="tablist" aria-label="视图切换">
-        <button class="tab" id="tab-overview" role="tab" aria-selected="true" aria-controls="panel-overview" type="button">概览</button>
-        <button class="tab" id="tab-settings" role="tab" aria-selected="false" aria-controls="panel-settings" type="button">权限</button>
-        <button class="tab" id="tab-about" role="tab" aria-selected="false" aria-controls="panel-about" type="button">关于</button>
+      <nav class="tabs" role="tablist" data-i18n-aria-label="tabs.aria" aria-label="视图切换">
+        <button class="tab" id="tab-overview" role="tab" aria-selected="true" aria-controls="panel-overview" type="button" data-i18n="tabs.overview">概览</button>
+        <button class="tab" id="tab-settings" role="tab" aria-selected="false" aria-controls="panel-settings" type="button" data-i18n="tabs.permissions">权限</button>
+        <button class="tab" id="tab-about" role="tab" aria-selected="false" aria-controls="panel-about" type="button" data-i18n="tabs.about">关于</button>
       </nav>
 
       <!-- ================= 概览 -->
@@ -34,69 +38,69 @@
           <div class="deck-head">
             <div>
               <span class="card-kicker">LINK STATUS</span>
-              <h2>浏览器通道</h2>
+              <h2 data-i18n="deck.title">浏览器通道</h2>
             </div>
             <span class="deck-signal" aria-hidden="true"></span>
           </div>
 
           <div class="setting-item" id="server-setting">
             <div class="row setting-view" id="server-view">
-              <span class="label">服务端</span>
+              <span class="label" data-i18n="field.server">服务端</span>
               <span class="value mono" id="status-server">—</span>
-              <button class="icon-btn" id="edit-server" type="button" aria-expanded="false" aria-controls="server-edit">编辑</button>
+              <button class="icon-btn" id="edit-server" type="button" aria-expanded="false" aria-controls="server-edit" data-i18n="action.edit">编辑</button>
             </div>
             <div class="setting-edit" id="server-edit" hidden>
               <label class="field">
-                <span class="label">服务器地址</span>
-                <input id="server-url" type="text" placeholder="https://your-abm-server" spellcheck="false" autocomplete="off" />
+                <span class="label" data-i18n="field.serverUrl">服务器地址</span>
+                <input id="server-url" type="text" data-i18n-placeholder="placeholder.server" placeholder="https://your-abm-server" spellcheck="false" autocomplete="off" />
               </label>
               <div class="btn-row compact">
-                <button id="save-server" class="btn primary" type="button">保存</button>
-                <button id="cancel-server" class="btn ghost" type="button">取消</button>
+                <button id="save-server" class="btn primary" type="button" data-i18n="action.save">保存</button>
+                <button id="cancel-server" class="btn ghost" type="button" data-i18n="action.cancel">取消</button>
               </div>
             </div>
           </div>
 
           <div class="setting-item" id="key-setting">
             <div class="row setting-view" id="key-view">
-              <span class="label">访问密钥</span>
+              <span class="label" data-i18n="field.accessKey">访问密钥</span>
               <span class="value" id="status-key">—</span>
-              <button class="icon-btn" id="edit-key" type="button" aria-expanded="false" aria-controls="key-edit">编辑</button>
+              <button class="icon-btn" id="edit-key" type="button" aria-expanded="false" aria-controls="key-edit" data-i18n="action.edit">编辑</button>
             </div>
             <div class="setting-edit" id="key-edit" hidden>
               <label class="field">
                 <span class="label">
-                  API Key
-                  <a class="inline-link" id="link-get-key" href="https://abm.borgle.io" target="_blank" rel="noreferrer">管理密钥 ↗</a>
+                  <span data-i18n="field.apiKey">API Key</span>
+                  <a class="inline-link" id="link-get-key" href="https://abm.borgle.io" target="_blank" rel="noreferrer" data-i18n="action.manageKeys">管理密钥 ↗</a>
                 </span>
                 <span class="input-wrap">
-                  <input id="api-key" type="password" placeholder="输入你的 API Key" spellcheck="false" autocomplete="off" />
-                  <button id="toggle-key" class="icon-btn" type="button" aria-label="显示或隐藏 API Key">显示</button>
+                  <input id="api-key" type="password" data-i18n-placeholder="placeholder.apiKey" placeholder="输入你的 API Key" spellcheck="false" autocomplete="off" />
+                  <button id="toggle-key" class="icon-btn" type="button" data-i18n-aria-label="aria.toggleKey" aria-label="显示或隐藏 API Key" data-i18n="action.show">显示</button>
                 </span>
               </label>
               <div class="btn-row compact">
-                <button id="save-key" class="btn primary" type="button">保存</button>
-                <button id="cancel-key" class="btn ghost" type="button">取消</button>
+                <button id="save-key" class="btn primary" type="button" data-i18n="action.save">保存</button>
+                <button id="cancel-key" class="btn ghost" type="button" data-i18n="action.cancel">取消</button>
               </div>
-              <p class="hint">Key 只保存在当前浏览器。扩展连接、视频桥与 MCP OAuth 授权都通过它识别你的浏览器。</p>
+              <p class="hint" data-i18n="hint.apiKey">Key 只保存在当前浏览器。扩展连接、视频桥与 MCP OAuth 授权都通过它识别你的浏览器。</p>
             </div>
           </div>
 
           <label class="switch">
             <input id="auto-reconnect" type="checkbox" />
-            <span>断线自动重连</span>
-            <small>扩展被回收后自动恢复</small>
+            <span data-i18n="switch.autoReconnect">断线自动重连</span>
+            <small data-i18n="switch.autoReconnectHint">扩展被回收后自动恢复</small>
           </label>
 
           <div class="row meta-row">
-            <span class="label">扩展 ID</span>
+            <span class="label" data-i18n="field.extensionId">扩展 ID</span>
             <span class="value mono" id="status-ext-id">—</span>
-            <button class="icon-btn" id="copy-ext-id" type="button">复制</button>
+            <button class="icon-btn" id="copy-ext-id" type="button" data-i18n="action.copy">复制</button>
           </div>
           <p class="alert" id="status-alert" hidden></p>
           <div class="btn-row">
-            <button id="btn-connect" class="btn primary block" type="button">连接</button>
-            <button id="btn-disconnect" class="btn block" type="button">断开</button>
+            <button id="btn-connect" class="btn primary block" type="button" data-i18n="action.connect">连接</button>
+            <button id="btn-disconnect" class="btn block" type="button" data-i18n="action.disconnect">断开</button>
           </div>
           <div class="deck-foot">
             <span>LOCAL BRIDGE</span>
@@ -106,14 +110,14 @@
 
         <section class="card onboarding" id="onboarding" hidden>
           <span class="card-kicker">QUICK START</span>
-          <h2>把浏览器接入 ABM</h2>
+          <h2 data-i18n="onboarding.title">把浏览器接入 ABM</h2>
           <ol class="steps">
-            <li>打开 <a id="link-home" href="https://abm.borgle.io" target="_blank" rel="noreferrer">ABM 管理台</a>，注册并创建 API Key</li>
-            <li>点击上方「访问密钥」右侧的「编辑」，粘贴 Key</li>
-            <li>如使用自建服务，先编辑「服务端」地址，再点「连接」</li>
+            <li><span data-i18n="onboarding.step1a">打开 </span><a id="link-home" href="https://abm.borgle.io" target="_blank" rel="noreferrer" data-i18n="onboarding.step1Link">ABM 管理台</a><span data-i18n="onboarding.step1b">，注册并创建 API Key</span></li>
+            <li data-i18n="onboarding.step2">点击上方「访问密钥」右侧的「编辑」，粘贴 Key</li>
+            <li data-i18n="onboarding.step3">如使用自建服务，先编辑「服务端」地址，再点「连接」</li>
           </ol>
           <div class="btn-row">
-            <button id="btn-edit-key-from-onboarding" class="btn primary block" type="button">填写 API Key</button>
+            <button id="btn-edit-key-from-onboarding" class="btn primary block" type="button" data-i18n="onboarding.fillKey">填写 API Key</button>
           </div>
         </section>
 
@@ -121,7 +125,7 @@
           <div class="card-head">
             <div>
               <span class="card-kicker">INBOX</span>
-              <h2>通知</h2>
+              <h2 data-i18n="notices.title">通知</h2>
             </div>
             <span class="badge" id="notice-badge" hidden></span>
           </div>
@@ -135,22 +139,22 @@
           <div class="card-head">
             <div>
               <span class="card-kicker">PERMISSIONS</span>
-              <h2>下载权限</h2>
+              <h2 data-i18n="permissions.title">下载权限</h2>
             </div>
             <span class="count" id="perm-count"></span>
           </div>
-          <p class="hint">
+          <p class="hint" data-i18n-html="permissions.hint">
             扩展自己下载文件（视频 URL 通道、按 URL 取图）时需要域名授权。
             本机后端（<code>127.0.0.1</code> / <code>localhost</code>）安装时已授予，标为「内置」且不可移除。
             其他站点可自行添加，也可以随时移除。
           </p>
           <label class="switch">
             <input id="all-hosts" type="checkbox" />
-            <span>一键允许所有网站</span>
+            <span data-i18n="switch.allHosts">一键允许所有网站</span>
           </label>
           <div class="field-row">
-            <input id="host-input" type="text" placeholder="输入域名，如 example.com" spellcheck="false" autocomplete="off" />
-            <button id="btn-add-host" class="btn" type="button">添加</button>
+            <input id="host-input" type="text" data-i18n-placeholder="placeholder.host" placeholder="输入域名，如 example.com" spellcheck="false" autocomplete="off" />
+            <button id="btn-add-host" class="btn" type="button" data-i18n="action.add">添加</button>
           </div>
           <div class="chips" id="host-list"></div>
         </section>
@@ -160,8 +164,8 @@
       <section class="panel" id="panel-about" role="tabpanel" aria-labelledby="tab-about" hidden>
         <section class="card about-card">
           <span class="card-kicker">ABOUT</span>
-          <h2>浏览器是新的接口</h2>
-          <p class="about-desc">
+          <h2 data-i18n="about.title">浏览器是新的接口</h2>
+          <p class="about-desc" data-i18n-html="about.body">
             ABM 是 <strong>a browser mcp</strong> 的简称。扩展通过 MCP 协议把用户浏览器安全接入 AI，
             提供导航、点击、填表、数据提取、网络抓包和文件投递能力。
           </p>
@@ -171,21 +175,21 @@
           <div class="card-head">
             <div>
               <span class="card-kicker">RESOURCES</span>
-              <h2>文档与支持</h2>
+              <h2 data-i18n="about.resourcesTitle">文档与支持</h2>
             </div>
           </div>
           <div class="link-list">
             <a class="link-row ext" id="link-docs" href="#" target="_blank" rel="noreferrer">
-              <span class="link-title">使用说明</span>
-              <span class="link-meta">安装、连接、23 个工具清单与联调步骤</span>
+              <span class="link-title" data-i18n="about.docsTitle">使用说明</span>
+              <span class="link-meta" data-i18n="about.docsMeta">安装、连接、23 个工具清单与联调步骤</span>
             </a>
             <a class="link-row ext" id="link-repo" href="#" target="_blank" rel="noreferrer">
-              <span class="link-title">GitHub 仓库</span>
+              <span class="link-title" data-i18n="about.repoTitle">GitHub 仓库</span>
               <span class="link-meta" id="link-repo-url">—</span>
             </a>
             <a class="link-row ext" id="link-issues" href="#" target="_blank" rel="noreferrer">
-              <span class="link-title">问题反馈</span>
-              <span class="link-meta">提交 issue 或功能建议</span>
+              <span class="link-title" data-i18n="about.issuesTitle">问题反馈</span>
+              <span class="link-meta" data-i18n="about.issuesMeta">提交 issue 或功能建议</span>
             </a>
           </div>
         </section>
@@ -194,12 +198,12 @@
           <div class="card-head">
             <div>
               <span class="card-kicker">SHORTCUTS</span>
-              <h2>快捷入口</h2>
+              <h2 data-i18n="about.shortcutsTitle">快捷入口</h2>
             </div>
           </div>
           <div class="link-list">
             <button class="link-row" id="quick-bridge" type="button">
-              <span class="link-title">打开视频桥页面</span>
+              <span class="link-title" data-i18n="about.bridgeTitle">打开视频桥页面</span>
               <span class="link-meta" id="quick-bridge-url">—</span>
             </button>
           </div>
@@ -208,7 +212,7 @@
 
       <footer class="app-footer">
         <span>ABM · a browser mcp</span>
-        <span>23 browser capabilities</span>
+        <span data-i18n="footer.capabilities">23 browser capabilities</span>
       </footer>
     </div>
     <div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>

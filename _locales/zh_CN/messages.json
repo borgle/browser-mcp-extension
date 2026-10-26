@@ -1,0 +1,10 @@
+{
+  "extensionName": {
+    "message": "ABM 浏览器助手",
+    "description": "浏览器按钮名称"
+  },
+  "extensionDescription": {
+    "message": "通过 ABM（a browser mcp）把用户浏览器安全接入 AI，提供导航、填表、数据提取、网络抓包和文件投递能力。",
+    "description": "扩展描述"
+  }
+}

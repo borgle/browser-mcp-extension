@@ -59,6 +59,8 @@ ABM 是 **a browser mcp** 的简称。
 - `permissions/`：Chrome 域名权限管理。
 - `notices/`：通知持久化与角标状态。
 - `popup/`：概览、设置、通知、账号入口和关于。
+- `popup/i18n.js`：popup 中英文词典、语言持久化和错误文案映射。
+- `_locales/`：扩展名称/描述的中英文 manifest 资源。
 - `inject-scripts/`：页面注入桥和 MAIN world 执行器。
 
 不要在 service worker 入口堆积无关职责。
@@ -114,6 +116,8 @@ WebSocket 关闭码只使用标准协议值，业务语义来自 `ABM_*`、`retr
 - 长任务遵守超时和取消规则。
 - 需要域名访问的操作必须先检查浏览器权限。
 - 视频工具统一使用暂存接收器，不维护独立缓存。
+- popup 文案必须走 `popup/i18n.js`，新增字符串同时补齐 `zh` 和 `en`；不得只写单一语言。
+- manifest 的 name/description 使用 `_locales`，修改后运行 `test/popup-i18n.test.mjs`。
 
 ## 开发流程
 

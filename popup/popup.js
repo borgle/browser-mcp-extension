@@ -9,6 +9,13 @@
  * 交互约定：异步动作有 busy → toast 反馈；服务器和 API Key 点「编辑」后就地修改。
  */
 import { api } from './api.js';
+import {
+  getLocale,
+  initPopupLanguage,
+  localizeError,
+  onLanguageChange,
+  t,
+} from './i18n.js';
 import { POPUP_MSG } from '../src/message-types.js';
 import { listNotices, markNoticeRead, removeNotice } from '../src/notices/manager.js';
 import {
@@ -21,13 +28,13 @@ import { BUILT_IN_HOSTS } from '../src/permissions/host-input.js';
 
 const $ = (id) => document.getElementById(id);
 
-/** 状态 → 胶囊样式与文案 */
+/** 状态 → 胶囊样式与文案 key */
 const STATUS_STYLE = {
-  connected: ['ok', '已连接'],
-  connecting: ['warn', '连接中'],
-  reconnecting: ['warn', '重连中'],
-  rejected: ['err', 'Key 已失效'],
-  disconnected: ['', '未连接'],
+  connected: ['ok', 'status.connected'],
+  connecting: ['warn', 'status.connecting'],
+  reconnecting: ['warn', 'status.reconnecting'],
+  rejected: ['err', 'status.rejected'],
+  disconnected: ['', 'status.disconnected'],
 };
 
 const VIEWS = ['overview', 'settings', 'about'];
@@ -68,12 +75,20 @@ function withBusy(button, busyText) {
 function relativeTime(timestamp) {
   if (!timestamp) return '';
   const diff = Date.now() - timestamp;
-  if (diff < 60_000) return '刚刚';
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} 分钟前`;
-  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)} 小时前`;
-  const date = new Date(timestamp);
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  if (diff < 60_000) return t('relative.justNow');
+  if (diff < 3_600_000) {
+    return t('relative.minutes', { count: Math.floor(diff / 60_000) });
+  }
+  if (diff < 86_400_000) {
+    return t('relative.hours', { count: Math.floor(diff / 3_600_000) });
+  }
+  return new Date(timestamp).toLocaleString(getLocale(), {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
 }
 
 // ---------------------------------------------------------------- 视图切换
@@ -101,10 +116,10 @@ function renderStatus(status) {
       : lastStatus.reconnecting
         ? 'reconnecting'
         : 'disconnected';
-  const [level, label] = STATUS_STYLE[kind];
+  const [level, labelKey] = STATUS_STYLE[kind];
 
   $('status-pill').className = `pill ${level}`;
-  $('status-text').textContent = label;
+  $('status-text').textContent = t(labelKey);
   // 已连接/重连中显示实际连接地址；未连接时以已保存配置为准（保存后即可看到新地址）。
   const serverBaseUrl =
     lastStatus.connected || lastStatus.reconnecting
@@ -117,11 +132,11 @@ function renderStatus(status) {
   if (lastStatus.authRejected) {
     alert.hidden = false;
     alert.className = 'alert err';
-    alert.textContent = '这把 API Key 已失效或被吊销，自动重连已停止。';
+    alert.textContent = t('error.keyRejected');
     const fix = document.createElement('button');
     fix.className = 'btn ghost alert-action';
     fix.type = 'button';
-    fix.textContent = '打开账号管理';
+    fix.textContent = t('action.openAccount');
     fix.addEventListener('click', () => {
       openUrl(portalUrl(currentConfig.serverBaseUrl || SERVICE_HOME, '/console'));
     });
@@ -129,7 +144,9 @@ function renderStatus(status) {
   } else if (lastStatus.lastError) {
     alert.hidden = false;
     alert.className = 'alert warn';
-    alert.textContent = `连接错误：${lastStatus.lastError}`;
+    alert.textContent = t('error.connectionPrefix', {
+      message: localizeError(lastStatus.lastError),
+    });
   } else {
     alert.hidden = true;
   }
@@ -154,7 +171,7 @@ function renderBridgeUrl(serverBaseUrl) {
   } catch {
     bridge = '';
   }
-  $('quick-bridge-url').textContent = bridge || '（需先配置服务器地址）';
+  $('quick-bridge-url').textContent = bridge || t('bridge.notConfigured');
   $('quick-bridge').disabled = !bridge;
   return bridge;
 }
@@ -170,6 +187,17 @@ function maskKey(key) {
   return typeof key === 'string' && key.length > 6 ? `${key.slice(0, 3)}***${key.slice(-2)}` : '—';
 }
 
+function renderKeySummary() {
+  $('status-key').textContent = currentConfig.apiKey
+    ? maskKey(currentConfig.apiKey)
+    : t('key.notConfigured');
+}
+
+function updateToggleKeyLabel() {
+  $('toggle-key').textContent =
+    $('api-key').type === 'password' ? t('action.show') : t('action.hide');
+}
+
 async function loadConfig() {
   const res = await api.getConfig();
   if (!res.success) return;
@@ -178,7 +206,7 @@ async function loadConfig() {
   $('server-url').value = config.serverBaseUrl || '';
   $('api-key').value = config.apiKey || '';
   $('auto-reconnect').checked = config.autoReconnect !== false;
-  $('status-key').textContent = config.apiKey ? maskKey(config.apiKey) : '未配置';
+  renderKeySummary();
   // 没配 key 才显示引导（概览里的三步上手）
   $('onboarding').hidden = Boolean(config.apiKey);
   renderBridgeUrl(config.serverBaseUrl);
@@ -212,7 +240,7 @@ function closeEditor(kind) {
   const input = $('api-key');
   input.value = currentConfig.apiKey || '';
   input.type = 'password';
-  $('toggle-key').textContent = '显示';
+  updateToggleKeyLabel();
 }
 
 /** 保存单个字段。保存服务器/Key 会断开旧连接，需要用户重新点「连接」。 */
@@ -222,7 +250,7 @@ async function saveField(kind) {
   const value = input.value.trim();
   if (isServer && !value) {
     input.focus();
-    toast('请填写服务器地址', 'err');
+    toast(t('toast.serverRequired'), 'err');
     return;
   }
 
@@ -234,17 +262,17 @@ async function saveField(kind) {
     : currentConfig.apiKey || '';
   if (value === savedValue) {
     closeEditor(kind);
-    toast('没有改动');
+    toast(t('toast.unchanged'));
     return;
   }
 
   const wasActive = lastStatus.connected === true || lastStatus.reconnecting === true;
   const patch = isServer ? { serverBaseUrl: value } : { apiKey: value };
-  const done = withBusy(button, '保存中…');
+  const done = withBusy(button, t('toast.saving'));
   try {
     const res = await api.saveConfig(patch);
     if (!res.success) {
-      toast(res.error || '保存失败', 'err');
+      toast(res.error ? localizeError(res.error) : t('toast.saveFailed'), 'err');
       return;
     }
     currentConfig = res.config || { ...currentConfig, ...patch };
@@ -252,7 +280,7 @@ async function saveField(kind) {
     await loadConfig();
     await refreshStatus();
     toast(
-      wasActive ? '已保存，连接已断开，请重新连接' : '已保存',
+      wasActive ? t('toast.savedDisconnected') : t('toast.saved'),
       'ok',
     );
   } finally {
@@ -267,11 +295,11 @@ async function onToggleAutoReconnect(event) {
     const res = await api.saveConfig({ autoReconnect: want });
     if (!res.success) {
       event.target.checked = !want;
-      toast(res.error || '保存失败', 'err');
+      toast(res.error ? localizeError(res.error) : t('toast.saveFailed'), 'err');
       return;
     }
     currentConfig = res.config || { ...currentConfig, autoReconnect: want };
-    toast(want ? '已开启自动重连' : '已关闭自动重连', 'ok');
+    toast(want ? t('toast.autoOn') : t('toast.autoOff'), 'ok');
   } finally {
     event.target.disabled = false;
   }
@@ -279,27 +307,34 @@ async function onToggleAutoReconnect(event) {
 
 async function onConnect() {
   if (activeEditor) {
-    toast('请先保存或取消正在编辑的设置', 'err');
+    toast(t('toast.finishEditing'), 'err');
     return;
   }
   if (!currentConfig.serverBaseUrl) {
     startEditor('server');
-    toast('请先填写服务器地址', 'err');
+    toast(t('toast.serverRequired'), 'err');
     return;
   }
   if (!currentConfig.apiKey) {
     startEditor('key');
-    toast('请先填写 API Key', 'err');
+    toast(t('toast.keyRequired'), 'err');
     return;
   }
 
-  const done = withBusy($('btn-connect'), '连接中…');
+  const done = withBusy($('btn-connect'), t('toast.connecting'));
   try {
     const res = await api.connect({
       serverBaseUrl: currentConfig.serverBaseUrl,
       apiKey: currentConfig.apiKey,
     });
-    toast(res.success ? '已发起连接' : res.error || '连接失败', res.success ? 'ok' : 'err');
+    toast(
+      res.success
+        ? t('toast.connectStarted')
+        : res.error
+          ? localizeError(res.error)
+          : t('toast.connectFailed'),
+      res.success ? 'ok' : 'err',
+    );
   } finally {
     done();
     await refreshStatus();
@@ -310,7 +345,7 @@ async function onDisconnect() {
   const done = withBusy($('btn-disconnect'));
   try {
     const res = await api.disconnect();
-    toast(res.success ? '已断开连接' : '操作失败，请重试', res.success ? '' : 'err');
+    toast(res.success ? t('toast.disconnected') : t('toast.operationFailed'), res.success ? '' : 'err');
   } finally {
     done();
     await refreshStatus();
@@ -326,8 +361,11 @@ async function refreshPermissions() {
 
   $('all-hosts').checked = !!allHostsAuthorized;
   $('perm-count').textContent = allHostsAuthorized
-    ? '已授权所有域名'
-    : `${authorizedHosts.length} 个自定义域名 · 内置 ${BUILT_IN_HOSTS.length} 个`;
+    ? t('permissions.countAll')
+    : t('permissions.count', {
+        custom: authorizedHosts.length,
+        builtin: BUILT_IN_HOSTS.length,
+      });
 
   // 已允许所有网站时，单独添加没有意义，直接禁用输入。
   const input = $('host-input');
@@ -335,8 +373,8 @@ async function refreshPermissions() {
   input.disabled = !!allHostsAuthorized;
   addButton.disabled = !!allHostsAuthorized;
   input.placeholder = allHostsAuthorized
-    ? '已允许所有网站，无需添加'
-    : '输入域名，如 example.com';
+    ? t('permissions.allPlaceholder')
+    : t('permissions.hostPlaceholder');
 
   const list = $('host-list');
   list.textContent = '';
@@ -345,12 +383,12 @@ async function refreshPermissions() {
   for (const host of BUILT_IN_HOSTS) {
     const chip = document.createElement('span');
     chip.className = 'chip builtin';
-    chip.title = '扩展安装时已授权，不可移除';
+    chip.title = t('permissions.builtinTitle');
     const name = document.createElement('span');
     name.textContent = host;
     const tag = document.createElement('span');
     tag.className = 'chip-tag';
-    tag.textContent = '内置';
+    tag.textContent = t('permissions.builtinTag');
     chip.append(name, tag);
     list.appendChild(chip);
   }
@@ -358,7 +396,9 @@ async function refreshPermissions() {
   if (authorizedHosts.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'empty-state';
-    empty.textContent = allHostsAuthorized ? '已允许所有网站' : '还没有自定义域名';
+    empty.textContent = allHostsAuthorized
+      ? t('permissions.allAllowed')
+      : t('permissions.noCustom');
     list.appendChild(empty);
     return;
   }
@@ -370,11 +410,18 @@ async function refreshPermissions() {
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.textContent = '×';
-    remove.title = `移除 ${host}`;
-    remove.setAttribute('aria-label', `移除 ${host}`);
+    remove.title = t('permissions.removeAria', { host });
+    remove.setAttribute('aria-label', t('permissions.removeAria', { host }));
     remove.addEventListener('click', async () => {
       const res2 = await revokeHost(host);
-      toast(res2.success ? `已移除 ${host}` : `移除失败：${res2.error || '请重试'}`, res2.success ? '' : 'err');
+      toast(
+        res2.success
+          ? t('permissions.removed', { host })
+          : t('permissions.removeFailed', {
+              error: localizeError(res2.error),
+            }),
+        res2.success ? '' : 'err',
+      );
       await refreshPermissions();
     });
     chip.append(name, remove);
@@ -384,24 +431,29 @@ async function refreshPermissions() {
 
 async function onAddHost() {
   if ($('all-hosts').checked) {
-    toast('已允许所有网站，无需单独添加');
+    toast(t('permissions.allNoAdd'));
     return;
   }
   const value = $('host-input').value.trim();
   if (!value) {
     $('host-input').focus();
-    toast('请输入域名', 'err');
+    toast(t('permissions.enterHost'), 'err');
     return;
   }
-  const done = withBusy($('btn-add-host'), '授权中…');
+  const done = withBusy($('btn-add-host'), t('permissions.granting'));
   try {
     // 权限申请必须在 popup 里发起（需要用户手势），记账交给 SW
     const res = await grantHost(value);
     if (res.success) {
       $('host-input').value = '';
-      toast(`已授权 ${res.host || value}`, 'ok');
+      toast(t('permissions.granted', { host: res.host || value }), 'ok');
     } else {
-      toast(`授权失败：${res.error || '请重试'}`, 'err');
+      toast(
+        t('permissions.grantFailed', {
+          error: localizeError(res.error),
+        }),
+        'err',
+      );
     }
   } finally {
     done();
@@ -415,9 +467,14 @@ async function onToggleAllHosts(event) {
   try {
     const res = wantGrant ? await requestAllHosts() : await revokeAllHosts();
     if (!res.success) {
-      toast(`${wantGrant ? '授权' : '撤销'}失败：${res.error || '请重试'}`, 'err');
+      toast(
+        t(wantGrant ? 'permissions.grantFailed' : 'permissions.revokeFailed', {
+          error: localizeError(res.error),
+        }),
+        'err',
+      );
     } else {
-      toast(wantGrant ? '已授权所有域名' : '已撤销所有域名授权', 'ok');
+      toast(wantGrant ? t('permissions.allGranted') : t('permissions.allRevoked'), 'ok');
     }
   } finally {
     event.target.disabled = false;
@@ -440,7 +497,7 @@ async function refreshNotices() {
   if (notices.length === 0) {
     const empty = document.createElement('li');
     empty.className = 'empty-state';
-    empty.textContent = '暂无通知';
+    empty.textContent = t('notices.empty');
     list.appendChild(empty);
     return;
   }
@@ -466,8 +523,8 @@ async function refreshNotices() {
       const open = document.createElement('button');
       open.className = 'icon-btn';
       open.type = 'button';
-      open.textContent = '详情';
-      open.title = '打开相关链接';
+      open.textContent = t('notices.details');
+      open.title = t('notices.openLink');
       open.addEventListener('click', () => openUrl(notice.actionUrl));
       actions.appendChild(open);
     }
@@ -475,8 +532,8 @@ async function refreshNotices() {
       const read = document.createElement('button');
       read.className = 'icon-btn';
       read.type = 'button';
-      read.textContent = '已读';
-      read.title = '标记已读';
+      read.textContent = t('notices.markRead');
+      read.title = t('notices.markReadTitle');
       read.addEventListener('click', async () => {
         await markNoticeRead(notice.id, true);
         await refreshNotices();
@@ -486,8 +543,8 @@ async function refreshNotices() {
     const del = document.createElement('button');
     del.className = 'icon-btn';
     del.type = 'button';
-    del.textContent = '移除';
-    del.title = '移除这条通知';
+    del.textContent = t('notices.remove');
+    del.title = t('notices.removeTitle');
     del.addEventListener('click', async () => {
       await removeNotice(notice.id);
       await refreshNotices();
@@ -517,7 +574,7 @@ function setupAbout(config = {}) {
 
   $('copy-ext-id').addEventListener('click', async () => {
     const ok = await copyText(chrome.runtime.id || '');
-    toast(ok ? '扩展 ID 已复制' : '复制失败，请手动选择', ok ? 'ok' : 'err');
+    toast(ok ? t('copy.idCopied') : t('copy.failed'), ok ? 'ok' : 'err');
   });
   $('quick-bridge').addEventListener('click', () => {
     const bridge = renderBridgeUrl(currentConfig.serverBaseUrl || config?.serverBaseUrl);
@@ -579,7 +636,7 @@ function bindEvents() {
     const input = $('api-key');
     const reveal = input.type === 'password';
     input.type = reveal ? 'text' : 'password';
-    $('toggle-key').textContent = reveal ? '隐藏' : '显示';
+    updateToggleKeyLabel();
   });
 
   chrome.runtime.onMessage.addListener((message) => {
@@ -590,6 +647,7 @@ function bindEvents() {
 }
 
 async function init() {
+  await initPopupLanguage();
   $('version').textContent = `v${chrome.runtime.getManifest().version}`;
   $('status-ext-id').textContent = chrome.runtime.id || '—';
   switchView('overview'); // 默认落在概览
@@ -598,6 +656,14 @@ async function init() {
   await loadConfig();
   setupAbout(currentConfig);
   bindEvents();
+
+  onLanguageChange(() => {
+    renderKeySummary();
+    updateToggleKeyLabel();
+    renderStatus(lastStatus);
+    void refreshPermissions();
+    void refreshNotices();
+  });
 
   await Promise.all([refreshStatus(), refreshPermissions(), refreshNotices()]);
 }

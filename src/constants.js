@@ -68,6 +68,7 @@ export const STORAGE_KEY = Object.freeze({
   bridgeKey: 'abm.bridgeKey',
   bridgeExtensionId: 'abm.bridgeExtensionId',
   reuseKeys: 'abm.reuseKeys',
+  language: 'abm.lang',
 });
 
 export const AUTO_GROUP = Object.freeze({

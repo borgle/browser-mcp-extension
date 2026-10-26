@@ -46,6 +46,7 @@ const BUNDLE_FILES = [
   'popup/api.js',
   'src/permissions/host-input.js',
   'popup/permissions-ui.js',
+  'popup/i18n.js',
   'popup/popup.js',
 ];
 
@@ -73,6 +74,7 @@ const previewState = {
   status: { connected: true, serverBaseUrl: 'http://127.0.0.1:18050', reconnecting: false, authRejected: false, lastUpdated: Date.now() },
   permissions: { allHostsAuthorized: false, authorizedHosts: ['cdn.example.com'], failNextRequest: false },
   storage: new Map([
+    ['abm.lang', 'zh'],
     ['abm.notice:n_demo_1', { id: 'n_demo_1', title: '视频投递完成', level: 'info', body: 'demo.mp4 已存入扩展暂存区', receivedAt: Date.now() - 120000, read: false }],
     ['abm.notice:n_demo_2', { id: 'n_demo_2', title: '账号提示', level: 'warning', body: '请到 ABM 管理台检查账号状态', actionUrl: 'https://borgle.io', receivedAt: Date.now() - 5400000, read: false }],
     ['abm.notice:n_demo_3', { id: 'n_demo_3', title: '下载权限已更新', level: 'info', body: '已添加 cdn.example.com', receivedAt: Date.now() - 86400000, read: true }],
@@ -100,7 +102,7 @@ function pickStorage(keys) {
 globalThis.chrome = {
   runtime: {
     getManifest: () => ({
-      version: '2.0.0-preview',
+      version: '2.0.2',
       // 与真实 manifest 一致：桥来源判定以这份列表为准
       externally_connectable: {
         matches: ['https://*.borgle.io/*', 'https://borgle.io/*', 'http://localhost:*/*', 'http://127.0.0.1:*/*'],

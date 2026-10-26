@@ -106,8 +106,36 @@ a:focus-visible { outline: 2px solid var(--acid); outline-offset: 3px; border-ra
   color: var(--muted);
   font: 800 8px/1 var(--sans);
   letter-spacing: .17em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .version { color: var(--faint); margin-left: 5px; letter-spacing: .04em; }
+
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: rgba(11, 12, 10, .55);
+}
+.lang-switch button {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--faint);
+  padding: 5px 6px;
+  font: 800 8px/1 var(--sans);
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease;
+}
+.lang-switch button:hover:not(.active) { color: var(--text); background: rgba(243, 240, 232, .06); }
+.lang-switch button.active { background: var(--acid); color: var(--ink); }
+.lang-switch button:focus-visible { outline: none; box-shadow: var(--focus); }
 
 .pill {
   display: inline-flex;
@@ -220,7 +248,7 @@ a:focus-visible { outline: 2px solid var(--acid); outline-offset: 3px; border-ra
   letter-spacing: -.045em;
 }
 .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
-.card-head .count { margin-left: auto; color: var(--muted); font: 700 10px/1.4 var(--sans); }
+.card-head .count { margin-left: auto; color: var(--muted); font: 700 10px/1.4 var(--sans); white-space: nowrap; }
 .card-head .badge { margin-left: auto; }
 
 /* hero deck */
