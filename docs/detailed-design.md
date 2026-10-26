@@ -312,7 +312,7 @@ CDP 生命周期 `cdp.js`：
 2. 等待目标 file input。
 3. 注入 `inject-bridge.js`（ISOLATED）和 `main-world-executor.js`（MAIN）。
 4. MAIN world 初始化接收器。
-5. 每片 20MB 通过 `tabs.sendMessage` 传入，页面显示进度 toast。
+5. 每片 20MB 通过 `tabs.sendMessage` 传入，页面显示进度 toast；toast 语言跟随 `abm.lang`，未设置时按 Chrome UI 语言（其他语言回退英文）。
 6. MAIN world 组装 `File` 并写入 input。
 7. `clearAfterSet=true` 时清空暂存区。
 

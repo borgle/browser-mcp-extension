@@ -15,6 +15,7 @@
  *   - 成功：`{ success:true, fileName, fileType, fileSize }`
  */
 import { BaseTool } from './base.js';
+import { resolveUiLanguage, uiText } from '../core/ui-language.js';
 import { hasHostPermission } from '../permissions/manager.js';
 import { VIDEO_MAX_BYTES, storeVideo } from '../video/store.js';
 
@@ -104,12 +105,12 @@ export class DownloadVideoFromUrlTool extends BaseTool {
       }
 
       const declaredBytes = parseInt(contentLength || '0', 10);
-      const totalLabel = declaredBytes > 0 ? (declaredBytes / 1024 / 1024).toFixed(2) : '未知';
 
       let bytes;
       if (args.tabId && declaredBytes > 0 && response.body) {
         // 已知长度 + 指定标签页：走流式读取，边下边在页面上报进度
-        bytes = await this.readStreamWithProgress(response, args.tabId, declaredBytes, totalLabel);
+        const language = await resolveUiLanguage();
+        bytes = await this.readStreamWithProgress(response, args.tabId, declaredBytes, language);
       } else {
         bytes = new Uint8Array(await response.arrayBuffer());
       }
@@ -139,12 +140,16 @@ export class DownloadVideoFromUrlTool extends BaseTool {
   }
 
   /** 流式读取响应体，每 500ms 往页面推一次进度 toast */
-  async readStreamWithProgress(response, tabId, declaredBytes, totalLabel) {
+  async readStreamWithProgress(response, tabId, declaredBytes, language) {
     const reader = response.body.getReader();
     const parts = [];
     let received = 0;
     let lastReportAt = 0;
     const startedAt = Date.now();
+    const totalMb =
+      declaredBytes > 0
+        ? (declaredBytes / 1024 / 1024).toFixed(2)
+        : uiText(language, 'video.unknownSize');
 
     for (;;) {
       const { done, value } = await reader.read();
@@ -159,7 +164,12 @@ export class DownloadVideoFromUrlTool extends BaseTool {
         const receivedMb = (received / 1024 / 1024).toFixed(2);
         const elapsedSec = (now - startedAt) / 1000;
         const speed = elapsedSec > 0 ? (received / 1024 / 1024 / elapsedSec).toFixed(2) : '0.00';
-        const text = `正在下载视频... ${percent}% (${receivedMb}MB / ${totalLabel}MB) ${speed}MB/s`;
+        const text = uiText(language, 'video.downloading', {
+          percent,
+          received: receivedMb,
+          total: totalMb,
+          speed,
+        });
         chrome.scripting
           .executeScript({
             target: { tabId },

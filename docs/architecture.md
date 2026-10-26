@@ -109,6 +109,7 @@ flowchart TB
 | `core/connection.js` | WebSocket 连接状态机、鉴权、心跳、退避、替换、Key 失效 |
 | `core/protocol.js` | `abm/1` 信封构造与校验 |
 | `core/storage.js` | `abm.connection` 读写、状态广播 |
+| `core/ui-language.js` | 页面 toast 语言解析（`abm.lang` 优先，其次 Chrome UI 语言，非中文回退英文） |
 | `tools/registry.js` | 工具名到实例的注册表与分发 |
 | `tools/base.js` | 注入、标签定位、等待、统一结果 |
 | `tools/*.js` | 19 个浏览器工具实现 |

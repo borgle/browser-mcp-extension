@@ -18,6 +18,7 @@
  */
 import { BaseTool } from './base.js';
 import { INJECT_ACTION, INJECT_MSG, EXECUTION_WORLD } from '../constants.js';
+import { resolveUiLanguage, uiText } from '../core/ui-language.js';
 import { VIDEO_CHUNK_BYTES, clearStoredVideo, getStoredVideo } from '../video/store.js';
 
 /** 单条 tabs.sendMessage 的等待上限 */
@@ -68,6 +69,7 @@ export class SetVideoToPageTool extends BaseTool {
       });
 
       const totalChunks = Math.ceil(video.data.length / VIDEO_CHUNK_BYTES);
+      const language = await resolveUiLanguage();
 
       // 1) 建立 MAIN world 的接收器
       await this.sendToPage(
@@ -94,14 +96,17 @@ export class SetVideoToPageTool extends BaseTool {
 
         // 进度 toast 只是锦上添花，失败不影响主流程
         try {
+          const toast = uiText(language, 'video.assembling', {
+            percent,
+            current: index + 1,
+            total: totalChunks,
+          });
           await chrome.scripting.executeScript({
             target: { tabId },
-            func: (progress, current, total) => {
-              if (typeof window.__showToast === 'function') {
-                window.__showToast(`正在组装视频... ${progress}% (${current}/${total})`);
-              }
+            func: (message) => {
+              if (typeof window.__showToast === 'function') window.__showToast(message);
             },
-            args: [percent, index + 1, totalChunks],
+            args: [toast],
             world: EXECUTION_WORLD.MAIN,
           });
         } catch {

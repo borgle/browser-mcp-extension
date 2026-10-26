@@ -360,6 +360,7 @@ popup 右上角有 `中文 / EN` 切换，默认跟随 Chrome UI 语言（其他
 3. 选择保存在 `abm.lang`，下次打开 popup 继续使用。
 4. 扩展名称和描述由 `_locales/en`、`_locales/zh_CN` 根据 Chrome UI 语言本地化。
 5. 从 popup 打开视频桥时，URL 会带上 `lang`，视频桥页面沿用当前 popup 语言。
+6. 页面内的下载/组装进度 toast 同样使用 `abm.lang`；未设置时按 Chrome UI 语言，非中文回退英文。
 
 注意：通知的标题和正文来自服务端/Agent 内容，不会自动翻译；界面按钮、状态和提示会翻译。
 
