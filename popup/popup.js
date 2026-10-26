@@ -10,6 +10,7 @@
  */
 import { api } from './api.js';
 import {
+  currentLanguage,
   getLocale,
   initPopupLanguage,
   localizeError,
@@ -167,6 +168,7 @@ function renderBridgeUrl(serverBaseUrl) {
   try {
     const url = new URL('/video-bridge', serverBaseUrl);
     url.searchParams.set('extensionId', chrome.runtime.id);
+    url.searchParams.set('lang', currentLanguage());
     bridge = url.toString();
   } catch {
     bridge = '';
