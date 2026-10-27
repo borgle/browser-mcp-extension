@@ -1,6 +1,9 @@
 /**
  * browser_download_video_from_url：扩展自己去某个 URL 下载视频，写进暂存区。
  *
+ * 这是 URL 源视频的优先通道：服务端只传原始地址，视频字节不经过服务器。
+ * 本机大文件优先使用 browser_set_files_native，只传绝对路径。
+ *
  * 参数：
  *   url      必填，http/https
  *   timeout  下载超时，默认 30 分钟

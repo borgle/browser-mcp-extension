@@ -270,6 +270,7 @@ CDP 生命周期 `cdp.js`：
 - TTL 30 分钟；服务 worker 回收即丢失。
 - 扩展侧上限 20GB；服务端默认 2GB，以服务端为准。
 - `getStoredVideoInfo` 只返回元数据，不返回字节。
+- 本机大文件优先走 `browser_set_files_native`，不进入暂存区。
 
 ### 7.2 Bridge 外部消息
 
@@ -303,6 +304,8 @@ CDP 生命周期 `cdp.js`：
 3. `fetch` 下载，30 分钟超时，伪装常见浏览器 UA。
 4. 校验 Content-Type / 扩展名白名单和大小上限。
 5. 写入暂存区。
+
+URL 源视频优先使用这条通道：服务端只传原始 URL，视频字节不经过服务器。base64 源才由服务端临时托管后交给扩展下载。本机文件优先使用 `browser_set_files_native`，只传绝对路径。
 
 ### 7.4 注入页面
 

@@ -192,11 +192,13 @@ flowchart TB
 
 ## 9. 视频
 
+- URL 源视频由扩展直接下载原始地址，服务端不接触视频字节；base64 源才由服务端临时托管。
 - 视频桥和 URL 下载最终都写入 `video/store.js` 的内存暂存区。
 - 桥消息只接受 manifest 声明的来源。
 - 分片通过 `chrome.tabs.sendMessage` 传入 MAIN world，逐片组装成 `File` 并写入 input。
 - 暂存 TTL 30 分钟，service worker 回收会丢失。
 - 扩展侧单视频上限 20GB；服务端默认上限 2GB，以服务端配置为准。
+- 本机大文件优先使用 `browser_set_files_native`，只传绝对路径，视频字节不经过服务端。
 
 ## 10. 通知与设置
 

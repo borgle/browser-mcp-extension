@@ -1,6 +1,8 @@
 /**
  * browser_set_files_native：用 CDP `DOM.setFileInputFiles` 注入**本机绝对路径**的文件。
  *
+ * 大文件优先使用这条通道：服务端只传路径，文件字节不经过服务器。
+ *
  * 参数：
  *   selector 必填，file input
  *   paths    必填，非空的本机绝对路径数组

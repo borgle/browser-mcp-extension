@@ -336,6 +336,8 @@ sequenceDiagram
     end
 ```
 
+URL 源由扩展直接下载原始地址，服务端只传 URL，不接触视频字节。base64 源才由服务端临时托管；本机大文件优先使用 `browser_set_files_native`，只传绝对路径。
+
 ## 11. 通知
 
 ```mermaid
