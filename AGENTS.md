@@ -52,6 +52,7 @@ ABM 是 **a browser mcp** 的简称。
 - `core/storage.js`：统一访问 `abm.*` 设置和运行状态。
 - `core/ui-language.js`：页面 toast 语言解析（`abm.lang` 优先，其次 Chrome UI 语言，非中文回退英文）。
 - `core/lifecycle.js`：service worker 初始化和恢复。
+- `core/external.js`：受信网页外部消息入口；一键连接校验来源同源并写入配置。
 - `tools/registry.js`：工具注册与分发。
 - `tools/*.js`：浏览器、DOM、上传、CDP 和页面数据操作（19 个扩展工具）。
 - `tabs.js` / `reuse.js`：标签等待、自动分组和复用范围。

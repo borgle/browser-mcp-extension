@@ -195,6 +195,7 @@ flowchart TB
 - URL 源视频由扩展直接下载原始地址，服务端不接触视频字节；base64 源才由服务端临时托管。
 - 视频桥和 URL 下载最终都写入 `video/store.js` 的内存暂存区。
 - 桥消息只接受 manifest 声明的来源。
+- `abm.bridge.config` 只返回短期 bridge token，不把 API Key 交给页面；token 由扩展用 API Key 向服务端换取。
 - 分片通过 `chrome.tabs.sendMessage` 传入 MAIN world，逐片组装成 `File` 并写入 input。
 - 暂存 TTL 30 分钟，service worker 回收会丢失。
 - 扩展侧单视频上限 20GB；服务端默认上限 2GB，以服务端配置为准。
@@ -235,6 +236,7 @@ flowchart TB
 
 - WebSocket：`/api/v1/extension/ws`，`abm/1`，`abm.v1`。
 - 视频桥：`/video-bridge` 页面的 `abm.bridge.*` / `abm.video.*` 外部消息。
+- 控制台：`abm.connection.configure`，受信来源且与目标服务器同源。
 - HTTP：视频 URL 下载、配置查询。
 
 对应服务端文档：

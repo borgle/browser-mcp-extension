@@ -5,7 +5,7 @@ import { refreshBadge } from '../notices/manager.js';
 import { loadConnectionConfig } from './storage.js';
 import { wsClient } from './connection.js';
 import { installPopupMessageListener } from '../popup-messages.js';
-import { installExternalMessageListener } from '../video/receiver.js';
+import { installExternalMessageListener } from './external.js';
 import { trackInjectedTabRemoval } from '../injectable.js';
 import { setTabCleanupHook, trackDebuggerLifecycle } from '../cdp.js';
 import { NetworkInterceptTool } from '../tools/network-intercept.js';

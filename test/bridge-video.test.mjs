@@ -20,6 +20,19 @@ globalThis.chrome = {
   },
 };
 
+let tokenRequest = null;
+globalThis.fetch = async (url, options) => {
+  tokenRequest = { url, options };
+  return {
+    ok: true,
+    status: 200,
+    json: async () => ({
+      token: 'abm_bridge_test',
+      expiresAt: '2026-01-01T00:00:00+00:00',
+    }),
+  };
+};
+
 const { handleExternalMessage } = await import('../src/video/receiver.js');
 const { getStoredVideo } = await import('../src/video/store.js');
 const { BRIDGE_MSG } = await import('../src/constants.js');
@@ -41,11 +54,18 @@ const base64 = Buffer.from(original).toString('base64');
 
 const extensionConfig = await handleExternalMessage({ type: BRIDGE_MSG.CONFIG }, sender);
 check(
-  '受信桥页面自动获取扩展配置',
+  '受信桥页面自动获取短期 bridge token',
   extensionConfig.ok === true &&
     extensionConfig.extensionId === 'test-extension' &&
-    extensionConfig.apiKey === 'abm_test_connection',
+    extensionConfig.bridgeToken === 'abm_bridge_test' &&
+    !('apiKey' in extensionConfig),
   JSON.stringify(extensionConfig),
+);
+check(
+  'bridge token 由扩展用 API Key 向服务端换取',
+  tokenRequest?.url === 'https://abm.borgle.io/api/v1/video/bridge-token' &&
+    tokenRequest?.options?.headers?.Authorization === 'Bearer abm_test_connection',
+  JSON.stringify(tokenRequest),
 );
 
 const started = await handleExternalMessage(

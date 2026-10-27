@@ -2,8 +2,8 @@
  * 受信视频桥页面与扩展之间的外部消息。
  *
  * 可信来源只由 manifest 的 externally_connectable.matches 决定。
- * 受信桥页面会通过 abm.bridge.config 获取当前连接配置（含 API Key），
- * 这是视频桥免重复配置的既定行为；因此绝不能把该接口暴露给任意网页。
+ * 受信桥页面通过 abm.bridge.config 获取短期 bridge token，不再接收 API Key；
+ * 因此绝不能把该接口暴露给任意网页。
  */
 import { BRIDGE_MSG, DEFAULT_BRIDGE_KEY_PATTERNS } from '../constants.js';
 import { loadConnectionConfig } from '../core/storage.js';
@@ -60,7 +60,7 @@ function trustedPatterns() {
   return tooBroad ? DEFAULT_BRIDGE_KEY_PATTERNS : declared;
 }
 
-function trustedSender(sender) {
+export function trustedSender(sender) {
   return matchesOrigin(senderOrigin(sender), trustedPatterns());
 }
 
@@ -130,19 +130,55 @@ setInterval(() => {
   }
 }, 300000);
 
+async function requestBridgeToken(config) {
+  const base = String(config?.serverBaseUrl || '').replace(/\/+$/, '');
+  if (!base || !config?.apiKey) {
+    return { ok: false, error: 'Extension has no server URL or API Key.' };
+  }
+  try {
+    const response = await fetch(`${base}/api/v1/video/bridge-token`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${config.apiKey}` },
+    });
+    if (!response.ok) {
+      return { ok: false, error: `Bridge token request failed: HTTP ${response.status}.` };
+    }
+    const data = await response.json();
+    if (!data?.token) {
+      return { ok: false, error: 'Bridge token response is invalid.' };
+    }
+    return { ok: true, token: data.token, expiresAt: data.expiresAt };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : 'Bridge token request failed.',
+    };
+  }
+}
+
 export async function handleExternalMessage(message, sender) {
   if (!trustedSender(sender)) {
     return { ok: false, error: '来源未受信任' };
   }
-  switch (message?.type) {
-    case BRIDGE_MSG.CONFIG: {
+  switch (message?.type) {    case BRIDGE_MSG.CONFIG: {
       const config = await loadConnectionConfig();
+      const bridge = await requestBridgeToken(config);
+      if (!bridge.ok) {
+        return {
+          ok: false,
+          error: bridge.error,
+          extensionId: chrome.runtime.id,
+          version: chrome.runtime.getManifest().version,
+          serverBaseUrl: config.serverBaseUrl,
+        };
+      }
       return {
         ok: true,
         extensionId: chrome.runtime.id,
         version: chrome.runtime.getManifest().version,
         serverBaseUrl: config.serverBaseUrl,
-        apiKey: config.apiKey || '',
+        bridgeToken: bridge.token,
+        expiresAt: bridge.expiresAt,
       };
     }
     case BRIDGE_MSG.CHECK:
@@ -169,19 +205,5 @@ export async function handleExternalMessage(message, sender) {
     default:
       return { ok: false, error: '未知外部消息类型' };
   }
-}
-
-export function installExternalMessageListener() {
-  chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
-    handleExternalMessage(message, sender)
-      .then(sendResponse)
-      .catch((error) =>
-        sendResponse({
-          ok: false,
-          error: error instanceof Error ? error.message : String(error),
-        }),
-      );
-    return true;
-  });
 }
 

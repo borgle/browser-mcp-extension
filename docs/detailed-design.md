@@ -285,7 +285,7 @@ CDP 生命周期 `cdp.js`：
 | 类型 | 行为 |
 |---|---|
 | `abm.bridge.check` | 返回扩展 ID、版本、暂存视频信息 |
-| `abm.bridge.config` | 返回扩展 ID、服务地址、已保存 API Key |
+| `abm.bridge.config` | 返回扩展 ID、服务地址、短期 bridge token；不返回 API Key |
 | `abm.video.begin` | 创建上传会话 |
 | `abm.video.chunk` | 追加 base64 分片 |
 | `abm.video.finish` | 校验分片数、合并、写入暂存区 |
@@ -294,6 +294,8 @@ CDP 生命周期 `cdp.js`：
 | `abm.video.clear` | 清空暂存区 |
 
 上传会话 30 分钟未完成自动清理。
+
+控制台一键连接使用 `abm.connection.configure`：只有受信来源且 `sender.origin` 与 `payload.serverBaseUrl` 同源时才接受；扩展先保存 `abm.connection`，再发起 WebSocket 连接。视频消息仍由 `handleExternalMessage` 处理，非视频消息由 `core/external.js` 分发。
 
 ### 7.3 URL 下载
 

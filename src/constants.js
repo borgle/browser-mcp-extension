@@ -140,6 +140,11 @@ export const BRIDGE_MSG = Object.freeze({
   VIDEO_INFO: 'abm.video.info',
 });
 
+/** 受信网页与扩展之间的非视频消息 */
+export const EXTERNAL_MSG = Object.freeze({
+  CONFIGURE: 'abm.connection.configure',
+});
+
 export function serverBaseUrl(raw) {
   const value = String(raw || '').trim();
   if (!value) return '';
