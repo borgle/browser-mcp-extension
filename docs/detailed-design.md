@@ -64,7 +64,7 @@ stateDiagram-v2
 2. 使用子协议 `abm.v1` 创建 WebSocket。
 3. `open` 后发送 `session.hello`：
    ```json
-   {"apiKey":"abm_...","extensionId":"...","extensionVersion":"2.0.2"}
+   {"apiKey":"abm_...","extensionId":"...","extensionVersion":"2.0.3"}
    ```
 4. 等待 `session.ready`，超时 15 秒。
 5. 收到 `session.ready` 后：

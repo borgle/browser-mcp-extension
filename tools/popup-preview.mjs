@@ -102,7 +102,7 @@ function pickStorage(keys) {
 globalThis.chrome = {
   runtime: {
     getManifest: () => ({
-      version: '2.0.2',
+      version: '2.0.3',
       // 与真实 manifest 一致：桥来源判定以这份列表为准
       externally_connectable: {
         matches: ['https://*.borgle.io/*', 'https://borgle.io/*', 'http://localhost:*/*', 'http://127.0.0.1:*/*'],
